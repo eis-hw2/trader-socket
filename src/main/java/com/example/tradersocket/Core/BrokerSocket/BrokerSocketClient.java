@@ -1,6 +1,7 @@
 package com.example.tradersocket.Core.BrokerSocket;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.example.tradersocket.Domain.Entity.Broker;
 import com.example.tradersocket.Domain.Entity.OrderBook;
 import com.example.tradersocket.Service.WebSocketService;
@@ -39,20 +40,11 @@ public class BrokerSocketClient extends WebSocketClient {
 
     @Override
     public void onMessage(String msg) {
-        /*
-        JSONObject jsonObject = JSONObject.parseObject(msg);
-        JSONObject type = jsonObject.getJSONObject("type");
-        String typeString = JsonHelper.jsonObjectToObject(type, String.class);
-        switch (typeString){
-            case "OrderBook":
-                JSONObject orderbook = jsonObject.getJSONObject("body");
-                OrderBook ob = JsonHelper.jsonObjectToObject(orderbook, OrderBook.class);
-                orderBook = ob;
-        }
-        */
         logger.info("[BrokerSocket.onMessage] " + this.uri.toString());
+        JSONObject body = JSON.parseObject(msg);
 
-        orderBook = JSON.parseObject(msg, OrderBook.class);
+        orderBook = body.getObject("orderBook", OrderBook.class);
+        // quotation = body.getObject("quotation", );
 
         logger.info(JSON.toJSONString(orderBook));
 
