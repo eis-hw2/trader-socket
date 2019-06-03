@@ -1,7 +1,7 @@
 package com.example.tradersocket.Service;
 
 import com.example.tradersocket.Domain.Entity.Broker;
-import com.example.tradersocket.Domain.Entity.OrderBook;
+import com.example.tradersocket.Domain.Entity.MarketDepth;
 
 import java.util.List;
 
@@ -14,5 +14,5 @@ public interface BrokerService {
 
     Broker findById(Integer id);
 
-    OrderBook findOrderBookByBrokerId(Integer bid);
+    MarketDepth findOrderBookByBrokerId(Integer bid);
 }

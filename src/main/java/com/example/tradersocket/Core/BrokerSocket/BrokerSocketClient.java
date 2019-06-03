@@ -3,8 +3,9 @@ package com.example.tradersocket.Core.BrokerSocket;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.example.tradersocket.Domain.Entity.Broker;
-import com.example.tradersocket.Domain.Entity.OrderBook;
-import com.example.tradersocket.Service.WebSocketService;
+import com.example.tradersocket.Domain.Entity.MarketDepth;
+import com.example.tradersocket.Domain.Entity.MarketQuotation;
+import com.example.tradersocket.Domain.Entity.Util.SocketMessage;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
@@ -20,17 +21,23 @@ public class BrokerSocketClient extends WebSocketClient {
     public final static short CONNECTED = 2;
     public final static short ERROR = 3;
 
-    private Logger logger = LoggerFactory.getLogger("BrokerSocketClient");
-    private int status = INIT;
+    private boolean closedByContainer = false;
 
-    private OrderBook orderBook;
+    private Logger logger = LoggerFactory.getLogger("BrokerSocketClient");
+    private int status;
+
+    private MarketDepth marketDepth;
+    private MarketQuotation marketQuotation;
+
     private Integer brokerId;
     private BrokerSocketContainer brokerSocketContainer;
 
-    public BrokerSocketClient(Broker broker, BrokerSocketContainer brokerSocketContainer) throws URISyntaxException{
-        super(new URI(broker.getWebSocket() + "/websocket/1"));
+    public BrokerSocketClient(Broker broker, BrokerSocketContainer brokerSocketContainer, String id) throws URISyntaxException{
+        super(new URI(broker.getWebSocket() + "/websocket/" + id));
+        logger.info("[BrokerSocketClient.Contructor] " + this.getURI());
         this.brokerSocketContainer = brokerSocketContainer;
         this.brokerId = broker.getId();
+        this.status = INIT;
     }
 
     @Override
@@ -40,13 +47,19 @@ public class BrokerSocketClient extends WebSocketClient {
 
     @Override
     public void onMessage(String msg) {
-        logger.info("[BrokerSocket.onMessage] " + this.uri.toString());
+        logger.info("[BrokerSocket.onMessage] URI: " + this.uri.toString());
+        logger.info("[BrokerSocket.onMessage] Message: " + msg);
+        
         JSONObject body = JSON.parseObject(msg);
+        String mqStr = body.getString("marketQuotation");
+        String mdStr = body.getString("marketDepth");
+        marketDepth = JSON.parseObject(mdStr, MarketDepth.class);
+        marketQuotation = JSON.parseObject(mqStr, MarketQuotation.class);
 
-        orderBook = body.getObject("orderBook", OrderBook.class);
         // quotation = body.getObject("quotation", );
 
-        logger.info(JSON.toJSONString(orderBook));
+        logger.info("[BrokerSocket.onMessage] MarketDepth: " + JSON.toJSONString(marketDepth));
+        logger.info("[BrokerSocket.onMessage] MarketQuotation: " + JSON.toJSONString(marketQuotation));
 
         this.brokerSocketContainer.getWebSocketService().broadcaseById(msg, brokerId);
     }
@@ -54,7 +67,7 @@ public class BrokerSocketClient extends WebSocketClient {
     @Override
     public void onClose(int i, String s, boolean b) {
         logger.info("[BrokerSocket.onClose]" + this.uri.toString() + " Connection Closed");
-        brokerSocketContainer.init();
+        brokerSocketContainer.onClose();
     }
 
     @Override
@@ -69,13 +82,13 @@ public class BrokerSocketClient extends WebSocketClient {
 
     public void init(){
         this.setStatus(CONNECTING);
-        logger.info("[BrokerSocketContainer.init] " + this.uri + " Connecting");
+        logger.info("[BrokerSocket.init] " + this.uri + " Connecting");
 
         this.connect();
         while(!this.getReadyState().equals(READYSTATE.OPEN)){}
 
         this.setStatus(CONNECTED);
-        logger.info("[BrokerSocketContainer.init] " + this.uri + " Connected");
+        logger.info("[BrokerSocket.init] " + this.uri + " Connected");
 
     }
 
@@ -87,12 +100,20 @@ public class BrokerSocketClient extends WebSocketClient {
         this.status = status;
     }
 
-    public OrderBook getOrderBook() {
-        return orderBook;
+    public MarketDepth getMarketDepth() {
+        return marketDepth;
     }
 
-    public void setOrderBook(OrderBook orderBook) {
-        this.orderBook = orderBook;
+    public void setMarketDepth(MarketDepth marketDepth) {
+        this.marketDepth = marketDepth;
+    }
+
+    public MarketQuotation getMarketQuotation() {
+        return marketQuotation;
+    }
+
+    public void setMarketQuotation(MarketQuotation marketQuotation) {
+        this.marketQuotation = marketQuotation;
     }
 
     public BrokerSocketContainer getBrokerSocketContainer() {
@@ -101,5 +122,13 @@ public class BrokerSocketClient extends WebSocketClient {
 
     public void setBrokerSocketContainer(BrokerSocketContainer brokerSocketContainer) {
         this.brokerSocketContainer = brokerSocketContainer;
+    }
+
+    public boolean isClosedByContainer() {
+        return closedByContainer;
+    }
+
+    public void setClosedByContainer(boolean closedByContainer) {
+        this.closedByContainer = closedByContainer;
     }
 }

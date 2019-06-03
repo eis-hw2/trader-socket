@@ -1,12 +1,13 @@
 package com.example.tradersocket.Core.BrokerSocket;
 
 import com.example.tradersocket.Domain.Entity.Broker;
-import com.example.tradersocket.Domain.Entity.OrderBook;
+import com.example.tradersocket.Domain.Entity.MarketDepth;
 import com.example.tradersocket.Service.WebSocketService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
+import java.util.UUID;
 
 public class BrokerSocketContainer {
     private Logger logger = LoggerFactory.getLogger("BrokerSocketContainer");
@@ -14,24 +15,35 @@ public class BrokerSocketContainer {
     private BrokerSocketClient client;
     private Broker broker;
     private WebSocketService webSocketService;
+    private UUID id;
 
     public BrokerSocketContainer(Broker broker, WebSocketService webSocketService){
-
-        logger.info("[BrokerSocketContainer.Constructor] " + broker.getWebSocket());
+        this.id = UUID.randomUUID();
         this.broker = broker;
         this.webSocketService = webSocketService;
-        init();
+        logger.info("[BrokerSocketContainer.Constructor] " + broker.getWebSocket() + " " + this.id);
     }
 
     public void init(){
         try {
-            client = new BrokerSocketClient(broker, this);
+            if (client != null && client.isOpen()) {
+                client.close();
+                client.setClosedByContainer(true);
+            }
+            client = new BrokerSocketClient(broker, this, id.toString());
+            client.init();
         }
         catch(URISyntaxException e){
             e.printStackTrace();
             logger.info("[BrokerSocketContainer] Error");
             logger.info("[BrokerSocketContainer] Reconnecting... ");
             init();
+        }
+    }
+
+    public void onClose(){
+        if (!client.isClosedByContainer()){
+            this.init();
         }
     }
 
@@ -47,8 +59,8 @@ public class BrokerSocketContainer {
         return broker;
     }
 
-    public OrderBook getOrderBook(){
-        return client.getOrderBook();
+    public MarketDepth getMarketDepth(){
+        return client.getMarketDepth();
     }
 
     @Override
