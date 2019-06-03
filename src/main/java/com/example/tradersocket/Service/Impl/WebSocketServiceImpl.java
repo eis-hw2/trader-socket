@@ -92,7 +92,7 @@ public class WebSocketServiceImpl implements WebSocketService {
 
     @Override
     public void sendMessage(String sid, String message) throws IOException {
-        log.info("[WebSocket] Send Message to " + sid);
+        log.info("[WebSocket.sendMessage] Send Message to " + sid);
         for (SessionWrapper sessionWrapper : sessionWrappers) {
             if (sessionWrapper.getSid().equals(sid)) {
                 sendMessageToSessionWrapper(sessionWrapper, message);
@@ -115,8 +115,8 @@ public class WebSocketServiceImpl implements WebSocketService {
 
     @Override
     public void broadcaseById(String message, Integer brokerId) {
-        log.info("[WebSocket] Send Message By BrokerId:" + brokerId);
-        log.info(message);
+        log.info("[WebSocket.broadcast] Send Message By BrokerId:" + brokerId);
+        log.info("[WebSocket] Message: " + message);
         sessionWrappers.stream()
                 .filter(e -> e.getBroker().getId().equals(brokerId))
                 .forEach(sessionWrapper -> {

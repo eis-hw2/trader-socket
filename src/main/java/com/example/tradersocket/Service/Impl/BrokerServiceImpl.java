@@ -1,12 +1,15 @@
 package com.example.tradersocket.Service.Impl;
 
 
+import com.alibaba.fastjson.JSON;
 import com.example.tradersocket.Core.BrokerSocket.BrokerSocketContainer;
 import com.example.tradersocket.Dao.BrokerDao;
 import com.example.tradersocket.Domain.Entity.Broker;
-import com.example.tradersocket.Domain.Entity.OrderBook;
+import com.example.tradersocket.Domain.Entity.MarketDepth;
 import com.example.tradersocket.Service.BrokerService;
 import com.example.tradersocket.Service.WebSocketService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +21,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BrokerServiceImpl implements BrokerService {
     private static ConcurrentHashMap<Integer, BrokerSocketContainer> brokerSocketContainers = new ConcurrentHashMap<>();
 
+    private static Logger logger = LoggerFactory.getLogger("BrokerService");
+
     @Autowired
     private BrokerDao brokerDao;
     @Autowired
@@ -28,6 +33,7 @@ public class BrokerServiceImpl implements BrokerService {
         System.out.println("[BrokerService.init] init");
         List<Broker> brokers = brokerDao.findAll();
         brokers.stream().forEach( e -> {
+            logger.info("[BrokerService.init] broker: "+JSON.toJSONString(e));
             BrokerSocketContainer brokerSocket = new BrokerSocketContainer(e, webSocketService);
             brokerSocket.init();
             brokerSocketContainers.put(e.getId(), brokerSocket);
@@ -35,11 +41,11 @@ public class BrokerServiceImpl implements BrokerService {
     }
 
     @Override
-    public OrderBook findOrderBookByBrokerId(Integer bid){
+    public MarketDepth findOrderBookByBrokerId(Integer bid){
         BrokerSocketContainer bsc = brokerSocketContainers.get(bid);
         if (bsc == null)
             return null;
-        return bsc.getOrderBook();
+        return bsc.getMarketDepth();
     }
 
     @Override
