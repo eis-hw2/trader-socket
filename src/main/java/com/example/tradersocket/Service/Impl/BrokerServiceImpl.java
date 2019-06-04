@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service
 public class BrokerServiceImpl implements BrokerService {
@@ -30,14 +32,20 @@ public class BrokerServiceImpl implements BrokerService {
 
     @PostConstruct
     public void init(){
-        System.out.println("[BrokerService.init] init");
         List<Broker> brokers = brokerDao.findAll();
-        brokers.stream().forEach( e -> {
-            logger.info("[BrokerService.init] broker: "+JSON.toJSONString(e));
-            BrokerSocketContainer brokerSocket = new BrokerSocketContainer(e, webSocketService);
-            brokerSocket.init();
-            brokerSocketContainers.put(e.getId(), brokerSocket);
+
+        ExecutorService pool = Executors.newFixedThreadPool(10);
+
+        brokers.stream().forEach(e -> {
+            pool.submit(() -> {
+                logger.info("[BrokerService.init] start BrokerId: " + e.getId());
+                BrokerSocketContainer brokerSocket = new BrokerSocketContainer(e, webSocketService);
+                brokerSocket.init();
+                brokerSocketContainers.put(e.getId(), brokerSocket);
+                logger.info("[BrokerService.init] end BrokerId: " + e.getId());
+            });
         });
+
     }
 
     @Override
