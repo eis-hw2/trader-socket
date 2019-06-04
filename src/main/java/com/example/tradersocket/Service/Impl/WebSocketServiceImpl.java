@@ -22,7 +22,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 @Service
 public class WebSocketServiceImpl implements WebSocketService {
 
-    static Logger log = LoggerFactory.getLogger(WebSocketServiceImpl.class);
+    static Logger logger = LoggerFactory.getLogger(WebSocketServiceImpl.class);
 
     private static CopyOnWriteArraySet<SessionWrapper> sessionWrappers = new CopyOnWriteArraySet<>();
     private static Integer onlineCount = 0;
@@ -56,12 +56,12 @@ public class WebSocketServiceImpl implements WebSocketService {
         SessionWrapper sessionWrapper = SessionWrapperFactory.create(session, sid);
         sessionWrappers.add(sessionWrapper);
         addOnlineCount();
-        log.info("[WebSocket.onOpen] New Connection:" + sid + ", Number of Connection:" + getOnlineCount());
+        logger.info("[WebSocket.onOpen] New Connection:" + sid + ", Number of Connection:" + getOnlineCount());
 
         try {
             sendMessageToSession(session, ResponseWrapperFactory.createResponseString(ResponseWrapper.SUCCESS, "connect success"));
         } catch (IOException e) {
-            log.error("[WebSocket.onOpen] IO Error");
+            logger.error("[WebSocket.onOpen] IO Error");
         }
     }
 
@@ -70,20 +70,23 @@ public class WebSocketServiceImpl implements WebSocketService {
         boolean isRemoved = sessionWrappers.removeIf(e -> e.getSid().equals(sid));
         if (isRemoved) {
             subOnlineCount();
-            log.info("[WebSocket.onClose] Connection Closed, Number of Connection:" + getOnlineCount());
+            logger.info("[WebSocket.onClose] Connection Closed, Number of Connection:" + getOnlineCount());
         } else {
-            log.error("[WebSocket.onClose] Remove Error");
+            logger.error("[WebSocket.onClose] Remove Error");
         }
     }
 
     @Override
     public void onMessage(String message, Session session, @PathParam("sid")String sid) {
+        logger.info("[WebSocket.onMessage] Raw Message:"+message);
         JSONObject body = JSON.parseObject(message);
 
         //String sid = body.getString("sid");
         Integer brokerId = body.getInteger("brokerId");
         String marketDepthId = body.getString("marketDepthId");
 
+        logger.info("[WebSocket.onMessage] BrokerId:"+brokerId);
+        logger.info("[WebSocket.onMessage] MarketDepthId:"+marketDepthId);
         Broker broker = brokerService.findById(brokerId);
 
         for (SessionWrapper sw: sessionWrappers){
@@ -105,13 +108,13 @@ public class WebSocketServiceImpl implements WebSocketService {
 
     @Override
     public void onError(Session session, Throwable error, @PathParam("sid")String sid) {
-        log.error("[WebSocket.onError] Error");
+        logger.error("[WebSocket.onError] Error");
         error.printStackTrace();
     }
 
     @Override
     public void sendMessage(String sid, String message) throws IOException {
-        log.info("[WebSocket.sendMessage] Send Message to " + sid);
+        logger.info("[WebSocket.sendMessage] Send Message to " + sid);
         for (SessionWrapper sessionWrapper : sessionWrappers) {
             if (sessionWrapper.getSid().equals(sid)) {
                 sendMessageToSessionWrapper(sessionWrapper, message);
@@ -122,8 +125,8 @@ public class WebSocketServiceImpl implements WebSocketService {
 
     @Override
     public void broadcast(String message) {
-        log.info("[WebSocket] Send Message to All");
-        log.info(message);
+        logger.info("[WebSocket] Send Message to All");
+        logger.info(message);
         sessionWrappers.stream()
                 .forEach(sessionWrapper -> {
                     try {
@@ -134,8 +137,8 @@ public class WebSocketServiceImpl implements WebSocketService {
 
     @Override
     public void broadcastByBrokerId(String message, Integer brokerId) {
-        log.info("[WebSocket.broadcast] BrokerId:" + brokerId);
-        log.info("[WebSocket.broadcast] Message:" + message);
+        logger.info("[WebSocket.broadcast] BrokerId:" + brokerId);
+        logger.info("[WebSocket.broadcast] Message:" + message);
         sessionWrappers.stream()
                 .filter(e -> e.getBroker().getId().equals(brokerId))
                 .forEach(sessionWrapper -> {
@@ -147,9 +150,9 @@ public class WebSocketServiceImpl implements WebSocketService {
 
     @Override
     public void broadcastByBrokerIdAndMarketDepthId(String message, Integer brokerId, String marketDepthId) {
-        log.info("[WebSocket.broadcast] BrokerId:" + brokerId);
-        log.info("[WebSocket.broadcast] MarketDepthId:" + marketDepthId);
-        log.info("[WebSocket] Message:" + message);
+        logger.info("[WebSocket.broadcast] BrokerId:" + brokerId);
+        logger.info("[WebSocket.broadcast] MarketDepthId:" + marketDepthId);
+        logger.info("[WebSocket] Message:" + message);
         sessionWrappers.stream()
                 .filter(e -> brokerId.equals(e.getBroker().getId()) &&
                                 marketDepthId.equals(e.getMarketDepthId()))
