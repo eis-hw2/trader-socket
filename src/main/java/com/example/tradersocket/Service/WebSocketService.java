@@ -4,19 +4,21 @@ import javax.websocket.Session;
 import java.io.IOException;
 
 public interface WebSocketService {
-    void onOpen(Session session, String sid, Integer bid);
+    void onOpen(Session session, String sid);
 
-    void onClose(Session session, String sid, Integer bid);
+    void onClose(Session session, String sid);
 
-    void onMessage(String message, Session session);
+    void onMessage(String message, Session session, String sid);
 
-    void onError(Session session, Throwable error);
+    void onError(Session session, Throwable error, String sid);
 
     void sendMessage(String sid, String message) throws IOException;
 
     void broadcast(String message);
 
-    void broadcaseById(String message, Integer borkerId);
+    void broadcastByBrokerId(String message, Integer borkerId);
+
+    void broadcastByBrokerIdAndMarketDepthId(String message, Integer borkerId, String marketDepthId);
 
     int getOnlineCount();
 }

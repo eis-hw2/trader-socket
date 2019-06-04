@@ -59,10 +59,6 @@ public class BrokerSocketContainer {
         return broker;
     }
 
-    public MarketDepth getMarketDepth(){
-        return client.getMarketDepth();
-    }
-
     @Override
     protected void finalize() throws Throwable {
         if (client != null)

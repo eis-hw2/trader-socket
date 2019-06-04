@@ -7,6 +7,21 @@ import javax.websocket.Session;
 
 public class SessionWrapper {
 
+    private Session session;
+    private String sid;
+
+    private Broker broker;
+    private String marketDepthId;
+
+    public SessionWrapper(){
+
+    }
+
+    public SessionWrapper(Session session, String sid){
+        this.session = session;
+        this.sid = sid;
+    }
+
     public Session getSession() {
         return session;
     }
@@ -23,25 +38,19 @@ public class SessionWrapper {
         this.sid = sid;
     }
 
-    private Session session;
-    private String sid;
-    private Broker broker;
-
-    public SessionWrapper(){
-
-    }
-
-    public SessionWrapper(Session session, String sid, Broker broker){
-        this.session = session;
-        this.sid = sid;
-        this.broker = broker;
-    }
-
     public Broker getBroker() {
         return broker;
     }
 
     public void setBroker(Broker broker) {
         this.broker = broker;
+    }
+
+    public String getMarketDepthId() {
+        return marketDepthId;
+    }
+
+    public void setMarketDepthId(String marketDepthId) {
+        this.marketDepthId = marketDepthId;
     }
 }

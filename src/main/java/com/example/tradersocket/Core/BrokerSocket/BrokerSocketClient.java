@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.example.tradersocket.Domain.Entity.Broker;
 import com.example.tradersocket.Domain.Entity.MarketDepth;
 import com.example.tradersocket.Domain.Entity.MarketQuotation;
-import com.example.tradersocket.Domain.Entity.Util.SocketMessage;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
@@ -13,6 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BrokerSocketClient extends WebSocketClient {
 
@@ -26,8 +27,11 @@ public class BrokerSocketClient extends WebSocketClient {
     private Logger logger = LoggerFactory.getLogger("BrokerSocketClient");
     private int status;
 
-    private MarketDepth marketDepth;
-    private MarketQuotation marketQuotation;
+    /**
+     * Key: MarketDepthId
+     * Value: MarketDepth & MarketQuotation
+     */
+    private Map<String, DataPair> data = new HashMap<>();
 
     private Integer brokerId;
     private BrokerSocketContainer brokerSocketContainer;
@@ -53,15 +57,27 @@ public class BrokerSocketClient extends WebSocketClient {
         JSONObject body = JSON.parseObject(msg);
         String mqStr = body.getString("marketQuotation");
         String mdStr = body.getString("marketDepth");
-        marketDepth = JSON.parseObject(mdStr, MarketDepth.class);
-        marketQuotation = JSON.parseObject(mqStr, MarketQuotation.class);
+
+        MarketDepth marketDepth = JSON.parseObject(mdStr, MarketDepth.class);
+        MarketQuotation marketQuotation = JSON.parseObject(mqStr, MarketQuotation.class);
+
+        String marketDepthId = marketDepth.getId();
+
+        DataPair curFuture = data.get(marketDepthId);
+        if (curFuture == null){
+            curFuture = new DataPair();
+        }
+        curFuture.setMarketDepth(marketDepth);
+        curFuture.setMarketQuotation(marketQuotation);
+
+        data.put(marketDepthId, curFuture);
 
         // quotation = body.getObject("quotation", );
 
         logger.info("[BrokerSocket.onMessage] MarketDepth: " + JSON.toJSONString(marketDepth));
         logger.info("[BrokerSocket.onMessage] MarketQuotation: " + JSON.toJSONString(marketQuotation));
 
-        this.brokerSocketContainer.getWebSocketService().broadcaseById(msg, brokerId);
+        this.brokerSocketContainer.getWebSocketService().broadcastByBrokerIdAndMarketDepthId(msg, brokerId, marketDepthId);
     }
 
     @Override
@@ -98,22 +114,6 @@ public class BrokerSocketClient extends WebSocketClient {
 
     public void setStatus(int status) {
         this.status = status;
-    }
-
-    public MarketDepth getMarketDepth() {
-        return marketDepth;
-    }
-
-    public void setMarketDepth(MarketDepth marketDepth) {
-        this.marketDepth = marketDepth;
-    }
-
-    public MarketQuotation getMarketQuotation() {
-        return marketQuotation;
-    }
-
-    public void setMarketQuotation(MarketQuotation marketQuotation) {
-        this.marketQuotation = marketQuotation;
     }
 
     public BrokerSocketContainer getBrokerSocketContainer() {

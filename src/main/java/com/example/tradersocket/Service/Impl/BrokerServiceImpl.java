@@ -41,14 +41,6 @@ public class BrokerServiceImpl implements BrokerService {
     }
 
     @Override
-    public MarketDepth findOrderBookByBrokerId(Integer bid){
-        BrokerSocketContainer bsc = brokerSocketContainers.get(bid);
-        if (bsc == null)
-            return null;
-        return bsc.getMarketDepth();
-    }
-
-    @Override
     public Broker create(Broker broker){
         Broker b = brokerDao.save(broker);
         BrokerSocketContainer brokerSocket = new BrokerSocketContainer(b, webSocketService);

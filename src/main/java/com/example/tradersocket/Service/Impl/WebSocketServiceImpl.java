@@ -1,8 +1,11 @@
 package com.example.tradersocket.Service.Impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.example.tradersocket.Domain.Entity.Broker;
+import com.example.tradersocket.Domain.Factory.ResponseWrapperFactory;
 import com.example.tradersocket.Domain.Factory.SessionWrapperFactory;
+import com.example.tradersocket.Domain.Wrapper.ResponseWrapper;
 import com.example.tradersocket.Domain.Wrapper.SessionWrapper;
 import com.example.tradersocket.Service.BrokerService;
 import com.example.tradersocket.Service.WebSocketService;
@@ -32,13 +35,10 @@ public class WebSocketServiceImpl implements WebSocketService {
     }
 
     @Override
-    public void onOpen(Session session, @PathParam("sid") String sid, @PathParam("bid") Integer bid) {
-        Broker broker = brokerService.findById(bid);
+    public void onOpen(Session session, @PathParam("sid") String sid) {
         String errMessage = null;
         if (sessionWrappers.stream().anyMatch(e -> e.getSid().equals(sid)))
             errMessage = "sid duplicated";
-        else if (broker == null)
-            errMessage = "broker not found";
 
         if (errMessage!= null){
             try {
@@ -48,22 +48,25 @@ public class WebSocketServiceImpl implements WebSocketService {
             catch(IOException e){
                 e.printStackTrace();
             }
-            return;
+            finally {
+                return;
+            }
         }
-        SessionWrapper sessionWrapper = SessionWrapperFactory.create(session, sid, broker);
+
+        SessionWrapper sessionWrapper = SessionWrapperFactory.create(session, sid);
         sessionWrappers.add(sessionWrapper);
         addOnlineCount();
         log.info("[WebSocket.onOpen] New Connection:" + sid + ", Number of Connection:" + getOnlineCount());
 
         try {
-            sendMessageToSession(session, JSON.toJSONString(brokerService.findOrderBookByBrokerId(bid)));
+            sendMessageToSession(session, ResponseWrapperFactory.createResponseString(ResponseWrapper.SUCCESS, "connect success"));
         } catch (IOException e) {
             log.error("[WebSocket.onOpen] IO Error");
         }
     }
 
     @Override
-    public void onClose(Session session, String sid, @PathParam("bid") Integer bid) {
+    public void onClose(Session session, @PathParam("sid")String sid) {
         boolean isRemoved = sessionWrappers.removeIf(e -> e.getSid().equals(sid));
         if (isRemoved) {
             subOnlineCount();
@@ -74,9 +77,25 @@ public class WebSocketServiceImpl implements WebSocketService {
     }
 
     @Override
-    public void onMessage(String message, Session session) {
+    public void onMessage(String message, Session session, @PathParam("sid")String sid) {
+        JSONObject body = JSON.parseObject(message);
+
+        //String sid = body.getString("sid");
+        Integer brokerId = body.getInteger("brokerId");
+        String marketDepthId = body.getString("marketDepthId");
+
+        Broker broker = brokerService.findById(brokerId);
+
+        for (SessionWrapper sw: sessionWrappers){
+            if (sw.getSid().equals(sid)){
+                sw.setBroker(broker);
+                sw.setMarketDepthId(marketDepthId);
+                break;
+            }
+        }
+
         try{
-            sendMessageToSession(session, message);
+            sendMessageToSession(session, ResponseWrapperFactory.createResponseString(ResponseWrapper.SUCCESS, "switch success"));
         }
         catch(IOException e){
             e.printStackTrace();
@@ -85,7 +104,7 @@ public class WebSocketServiceImpl implements WebSocketService {
     }
 
     @Override
-    public void onError(Session session, Throwable error) {
+    public void onError(Session session, Throwable error, @PathParam("sid")String sid) {
         log.error("[WebSocket.onError] Error");
         error.printStackTrace();
     }
@@ -114,11 +133,26 @@ public class WebSocketServiceImpl implements WebSocketService {
     }
 
     @Override
-    public void broadcaseById(String message, Integer brokerId) {
-        log.info("[WebSocket.broadcast] Send Message By BrokerId:" + brokerId);
-        log.info("[WebSocket] Message: " + message);
+    public void broadcastByBrokerId(String message, Integer brokerId) {
+        log.info("[WebSocket.broadcast] BrokerId:" + brokerId);
+        log.info("[WebSocket.broadcast] Message:" + message);
         sessionWrappers.stream()
                 .filter(e -> e.getBroker().getId().equals(brokerId))
+                .forEach(sessionWrapper -> {
+                    try {
+                        sendMessageToSessionWrapper(sessionWrapper, message);
+                    } catch (IOException e) { }
+                });
+    }
+
+    @Override
+    public void broadcastByBrokerIdAndMarketDepthId(String message, Integer brokerId, String marketDepthId) {
+        log.info("[WebSocket.broadcast] BrokerId:" + brokerId);
+        log.info("[WebSocket.broadcast] MarketDepthId:" + marketDepthId);
+        log.info("[WebSocket] Message:" + message);
+        sessionWrappers.stream()
+                .filter(e -> e.getBroker().getId().equals(brokerId) &&
+                                e.getMarketDepthId().equals(marketDepthId))
                 .forEach(sessionWrapper -> {
                     try {
                         sendMessageToSessionWrapper(sessionWrapper, message);

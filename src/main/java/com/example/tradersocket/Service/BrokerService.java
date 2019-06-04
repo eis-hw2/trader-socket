@@ -13,6 +13,4 @@ public interface BrokerService {
     List<Broker> findAll();
 
     Broker findById(Integer id);
-
-    MarketDepth findOrderBookByBrokerId(Integer bid);
 }

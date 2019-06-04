@@ -9,7 +9,7 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 
 
-@ServerEndpoint(value = "/websocket/{sid}/{bid}")
+@ServerEndpoint(value = "/websocket/{sid}")
 @Component
 public class WebSocketEndpoint {
 
@@ -22,22 +22,22 @@ public class WebSocketEndpoint {
 
 
     @OnOpen
-    public void onOpen(Session session, @PathParam("sid") String sid, @PathParam("bid") Integer bid) {
-        webSocketService.onOpen(session, sid, bid);
+    public void onOpen(Session session, @PathParam("sid") String sid) {
+        webSocketService.onOpen(session, sid);
     }
 
     @OnClose
-    public void onClose(Session session, @PathParam("sid") String sid, @PathParam("bid") Integer bid) {
-        webSocketService.onClose(session, sid, bid);
+    public void onClose(Session session, @PathParam("sid") String sid) {
+        webSocketService.onClose(session, sid);
     }
 
     @OnMessage
-    public void onMessage(String message, Session session) {
-        webSocketService.onMessage(message, session);
+    public void onMessage(String message, Session session, @PathParam("sid") String sid) {
+        webSocketService.onMessage(message, session, sid);
     }
 
     @OnError
-    public void onError(Session session, Throwable error) {
-        webSocketService.onError(session, error);
+    public void onError(Session session, Throwable error, @PathParam("sid") String sid) {
+        webSocketService.onError(session, error, sid);
     }
 }
