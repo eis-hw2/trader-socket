@@ -11,6 +11,7 @@ import com.example.tradersocket.Service.WebSocketService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -29,20 +30,29 @@ public class BrokerServiceImpl implements BrokerService {
     private BrokerDao brokerDao;
     @Autowired
     private WebSocketService webSocketService;
+    @Autowired
+    private ExecutorService pool;
+
+    @Bean
+    public ExecutorService pool(){
+        return Executors.newCachedThreadPool();
+    }
+
+    private void socketInit(Broker broker){
+        logger.info("[BrokerService.init] start BrokerId: " + broker.getId());
+        BrokerSocketContainer brokerSocket = new BrokerSocketContainer(broker, webSocketService);
+        brokerSocketContainers.put(broker.getId(), brokerSocket);
+        brokerSocket.init();
+        logger.info("[BrokerService.init] end BrokerId: " + broker.getId());
+    }
 
     @PostConstruct
     public void init(){
         List<Broker> brokers = brokerDao.findAll();
 
-        ExecutorService pool = Executors.newFixedThreadPool(10);
-
         brokers.stream().forEach(e -> {
-            pool.submit(() -> {
-                logger.info("[BrokerService.init] start BrokerId: " + e.getId());
-                BrokerSocketContainer brokerSocket = new BrokerSocketContainer(e, webSocketService);
-                brokerSocket.init();
-                brokerSocketContainers.put(e.getId(), brokerSocket);
-                logger.info("[BrokerService.init] end BrokerId: " + e.getId());
+            pool.execute(() -> {
+                socketInit(e);
             });
         });
 
@@ -50,11 +60,13 @@ public class BrokerServiceImpl implements BrokerService {
 
     @Override
     public Broker create(Broker broker){
-        Broker b = brokerDao.save(broker);
-        BrokerSocketContainer brokerSocket = new BrokerSocketContainer(b, webSocketService);
-        //brokerSocket.init();
-        brokerSocketContainers.put(b.getId(), brokerSocket);
-        return b;
+        Broker savedBroker = brokerDao.save(broker);
+
+        pool.execute(() -> {
+            socketInit(savedBroker);
+        });
+
+        return savedBroker;
     }
 
     @Override

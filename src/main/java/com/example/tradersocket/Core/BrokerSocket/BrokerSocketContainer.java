@@ -27,8 +27,7 @@ public class BrokerSocketContainer {
     public void init(){
         try {
             if (client != null && client.isOpen()) {
-                client.close();
-                client.setClosedByContainer(true);
+                this.close();
             }
             client = new BrokerSocketClient(broker, this, id.toString());
             client.init();
@@ -53,6 +52,7 @@ public class BrokerSocketContainer {
 
     public void close(){
         client.close();
+        client.setClosedByContainer(true);
     }
 
     public Broker getBroker() {
@@ -62,7 +62,7 @@ public class BrokerSocketContainer {
     @Override
     protected void finalize() throws Throwable {
         if (client != null)
-            client.close();
+            this.close();
     }
 
     public WebSocketService getWebSocketService() {

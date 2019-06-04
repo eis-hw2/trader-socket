@@ -46,6 +46,7 @@ public class BrokerSocketClient extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
+        closedByContainer = false;
         logger.info("[BrokerSocket.onOpen] "+ this.uri.toString() + " Connection Success");
     }
 
