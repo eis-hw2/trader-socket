@@ -26,5 +26,5 @@ pipeline:
     secrets: [ssh_username, ssh_password]
     port: 30250
     script:
-      - /root/shell/deployment-wjs.sh trader-socket 30257 9091
+      - /root/shell/deployment-wjs.sh trader-socket 30257 8080
 

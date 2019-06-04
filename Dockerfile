@@ -7,5 +7,5 @@ ENV TZ=Asia/Shanghai
 RUN sh -c 'touch /app/app.jar' && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 WORKDIR /app
 RUN chmod a+x deploy.sh
-EXPOSE 9091
+EXPOSE 8080
 CMD /app/deploy.sh
