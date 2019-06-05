@@ -30,7 +30,6 @@ public class WebSocketServiceImpl implements WebSocketService {
     static Logger logger = LoggerFactory.getLogger(WebSocketServiceImpl.class);
 
     private static CopyOnWriteArraySet<SessionWrapper> sessionWrappers = new CopyOnWriteArraySet<>();
-    private static Integer onlineCount = 0;
 
     @Autowired
     BrokerService brokerService;
@@ -43,6 +42,7 @@ public class WebSocketServiceImpl implements WebSocketService {
 
     @Override
     public void onOpen(Session session, @PathParam("sid") String sid) {
+        /*
         String errMessage = null;
         if (sessionWrappers.stream().anyMatch(e -> e.getSid().equals(sid)))
             errMessage = "sid duplicated";
@@ -58,11 +58,10 @@ public class WebSocketServiceImpl implements WebSocketService {
             finally {
                 return;
             }
-        }
+        }*/
 
         SessionWrapper sessionWrapper = SessionWrapperFactory.create(session, sid);
         sessionWrappers.add(sessionWrapper);
-        addOnlineCount();
         logger.info("[WebSocket.onOpen] New Connection:" + sid + ", Number of Connection:" + getOnlineCount());
 
         try {
@@ -76,7 +75,6 @@ public class WebSocketServiceImpl implements WebSocketService {
     public void onClose(Session session, @PathParam("sid")String sid) {
         boolean isRemoved = sessionWrappers.removeIf(e -> e.getSid().equals(sid));
         if (isRemoved) {
-            subOnlineCount();
             logger.info("[WebSocket.onClose] Connection Closed, Number of Connection:" + getOnlineCount());
         } else {
             logger.error("[WebSocket.onClose] Remove Error");
@@ -185,7 +183,7 @@ public class WebSocketServiceImpl implements WebSocketService {
 
     @Override
     public synchronized int getOnlineCount() {
-        return onlineCount;
+        return sessionWrappers.size();
     }
 
     private static void sendMessageToSessionWrapper(SessionWrapper sessionWrapper, String message) throws IOException {
@@ -194,17 +192,5 @@ public class WebSocketServiceImpl implements WebSocketService {
 
     private static void sendMessageToSession(Session session, String message) throws IOException {
         session.getBasicRemote().sendText(message);
-    }
-
-    private void addOnlineCount() {
-        synchronized (onlineCount) {
-            WebSocketServiceImpl.onlineCount++;
-        }
-    }
-
-    private void subOnlineCount() {
-        synchronized (onlineCount) {
-            WebSocketServiceImpl.onlineCount--;
-        }
     }
 }
