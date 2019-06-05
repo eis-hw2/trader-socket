@@ -1,5 +1,6 @@
 package com.example.tradersocket.Core.BrokerSocket;
 
+import com.example.tradersocket.Dao.FutureRecordDao;
 import com.example.tradersocket.Domain.Entity.Broker;
 import com.example.tradersocket.Domain.Entity.MarketDepth;
 import com.example.tradersocket.Service.WebSocketService;
@@ -15,11 +16,15 @@ public class BrokerSocketContainer {
     private BrokerSocketClient client;
     private Broker broker;
     private WebSocketService webSocketService;
+    private FutureRecordDao futureRecordDao;
     private UUID id;
 
-    public BrokerSocketContainer(Broker broker, WebSocketService webSocketService){
+    public BrokerSocketContainer(Broker broker,
+                                 WebSocketService webSocketService,
+                                 FutureRecordDao futureRecordDao){
         this.id = UUID.randomUUID();
         this.broker = broker;
+        this.futureRecordDao = futureRecordDao;
         this.webSocketService = webSocketService;
         logger.info("[BrokerSocketContainer.Constructor] " + broker.getWebSocket() + " " + this.id);
     }
@@ -71,5 +76,13 @@ public class BrokerSocketContainer {
 
     public void setWebSocketService(WebSocketService webSocketService) {
         this.webSocketService = webSocketService;
+    }
+
+    public FutureRecordDao getFutureRecordDao() {
+        return futureRecordDao;
+    }
+
+    public void setFutureRecordDao(FutureRecordDao futureRecordDao) {
+        this.futureRecordDao = futureRecordDao;
     }
 }

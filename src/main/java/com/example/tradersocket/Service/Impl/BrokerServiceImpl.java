@@ -4,6 +4,7 @@ package com.example.tradersocket.Service.Impl;
 import com.alibaba.fastjson.JSON;
 import com.example.tradersocket.Core.BrokerSocket.BrokerSocketContainer;
 import com.example.tradersocket.Dao.BrokerDao;
+import com.example.tradersocket.Dao.FutureRecordDao;
 import com.example.tradersocket.Domain.Entity.Broker;
 import com.example.tradersocket.Domain.Entity.MarketDepth;
 import com.example.tradersocket.Service.BrokerService;
@@ -32,6 +33,8 @@ public class BrokerServiceImpl implements BrokerService {
     private WebSocketService webSocketService;
     @Autowired
     private ExecutorService pool;
+    @Autowired
+    private FutureRecordDao futureRecordDao;
 
     @Bean
     public ExecutorService pool(){
@@ -40,7 +43,7 @@ public class BrokerServiceImpl implements BrokerService {
 
     private void socketInit(Broker broker){
         logger.info("[BrokerService.init] start BrokerId: " + broker.getId());
-        BrokerSocketContainer brokerSocket = new BrokerSocketContainer(broker, webSocketService);
+        BrokerSocketContainer brokerSocket = new BrokerSocketContainer(broker, webSocketService, futureRecordDao);
         brokerSocketContainers.put(broker.getId(), brokerSocket);
         brokerSocket.init();
         logger.info("[BrokerService.init] end BrokerId: " + broker.getId());

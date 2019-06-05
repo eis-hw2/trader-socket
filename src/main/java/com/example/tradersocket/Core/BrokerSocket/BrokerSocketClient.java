@@ -3,6 +3,7 @@ package com.example.tradersocket.Core.BrokerSocket;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.example.tradersocket.Domain.Entity.Broker;
+import com.example.tradersocket.Domain.Entity.FutureRecord;
 import com.example.tradersocket.Domain.Entity.MarketDepth;
 import com.example.tradersocket.Domain.Entity.MarketQuotation;
 import org.java_websocket.client.WebSocketClient;
@@ -12,6 +13,8 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,10 +25,18 @@ public class BrokerSocketClient extends WebSocketClient {
     public final static short CONNECTED = 2;
     public final static short ERROR = 3;
 
+    private final static String MarketQuotation = "marketQuotation";
+    private final static String MarketDepth = "marketDepth";
+    private final static String CurPrice = "curPrice";
+    private final static String CurVolume = "curVolume";
+    private final static String CurTime = "curTime";
+
     private boolean closedByContainer = false;
 
     private Logger logger = LoggerFactory.getLogger("BrokerSocketClient");
     private int status;
+
+    private Integer lastVolume = 0;
 
     /**
      * Key: MarketDepthId
@@ -56,14 +67,19 @@ public class BrokerSocketClient extends WebSocketClient {
         logger.info("[BrokerSocket.onMessage] Message: " + msg);
         
         JSONObject body = JSON.parseObject(msg);
-        String mqStr = body.getString("marketQuotation");
-        String mdStr = body.getString("marketDepth");
+        String mqStr = body.getString(MarketQuotation);
+        String mdStr = body.getString(MarketDepth);
 
         MarketDepth marketDepth = JSON.parseObject(mdStr, MarketDepth.class);
         MarketQuotation marketQuotation = JSON.parseObject(mqStr, MarketQuotation.class);
 
-        String marketDepthId = marketDepth.getId();
+        logger.info("[BrokerSocket.onMessage] MarketDepth: " + JSON.toJSONString(marketDepth));
+        logger.info("[BrokerSocket.onMessage] MarketQuotation: " + JSON.toJSONString(marketQuotation));
 
+        String marketDepthId = marketDepth.getId();
+        /**
+         * 状态信息
+         */
         DataPair curFuture = data.get(marketDepthId);
         if (curFuture == null){
             curFuture = new DataPair();
@@ -73,12 +89,30 @@ public class BrokerSocketClient extends WebSocketClient {
 
         data.put(marketDepthId, curFuture);
 
-        // quotation = body.getObject("quotation", );
+        /**
+         * 持久化信息
+         */
+        float curPrice = marketQuotation.getChangePrice();
+        int curVolume = marketQuotation.getTotalVolume() - lastVolume;
+        Calendar curTime = Calendar.getInstance();
+        String datetime =  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(curTime.getTime());
 
-        logger.info("[BrokerSocket.onMessage] MarketDepth: " + JSON.toJSONString(marketDepth));
-        logger.info("[BrokerSocket.onMessage] MarketQuotation: " + JSON.toJSONString(marketQuotation));
+        FutureRecord futureRecord = new FutureRecord();
+        futureRecord.setBrokerId(brokerId);
+        futureRecord.setDatetime(datetime);
+        futureRecord.setMarketDepthId(marketDepthId);
+        futureRecord.setPrice(curPrice);
+        futureRecord.setVolume(curVolume);
+        this.getBrokerSocketContainer().getFutureRecordDao().save(futureRecord);
 
-        this.brokerSocketContainer.getWebSocketService().broadcastByBrokerIdAndMarketDepthId(msg, brokerId, marketDepthId);
+        JSONObject retweet = new JSONObject();
+        retweet.put(CurPrice, curPrice);
+        retweet.put(CurVolume, curVolume);
+        retweet.put(CurTime, datetime);
+        retweet.put(MarketQuotation, marketQuotation);
+        retweet.put(MarketDepth, marketDepth);
+
+        this.getBrokerSocketContainer().getWebSocketService().broadcastByBrokerIdAndMarketDepthId(retweet.toJSONString(), brokerId, marketDepthId);
     }
 
     @Override

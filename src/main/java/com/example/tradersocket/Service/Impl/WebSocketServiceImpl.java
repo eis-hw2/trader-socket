@@ -2,7 +2,9 @@ package com.example.tradersocket.Service.Impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.example.tradersocket.Dao.FutureRecordDao;
 import com.example.tradersocket.Domain.Entity.Broker;
+import com.example.tradersocket.Domain.Entity.FutureRecord;
 import com.example.tradersocket.Domain.Factory.ResponseWrapperFactory;
 import com.example.tradersocket.Domain.Factory.SessionWrapperFactory;
 import com.example.tradersocket.Domain.Wrapper.ResponseWrapper;
@@ -17,6 +19,9 @@ import org.springframework.stereotype.Service;
 import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 @Service
@@ -29,6 +34,8 @@ public class WebSocketServiceImpl implements WebSocketService {
 
     @Autowired
     BrokerService brokerService;
+    @Autowired
+    FutureRecordDao futureRecordDao;
 
     public static CopyOnWriteArraySet<SessionWrapper> getSessionWrappers(){
         return sessionWrappers;
@@ -81,7 +88,6 @@ public class WebSocketServiceImpl implements WebSocketService {
         logger.info("[WebSocket.onMessage] Raw Message:"+message);
         JSONObject body = JSON.parseObject(message);
 
-        //String sid = body.getString("sid");
         Integer brokerId = body.getInteger("brokerId");
         String marketDepthId = body.getString("marketDepthId");
 
@@ -97,8 +103,21 @@ public class WebSocketServiceImpl implements WebSocketService {
             }
         }
 
+        Calendar curTime = Calendar.getInstance();
+        curTime.set(Calendar.HOUR_OF_DAY, 0);
+        curTime.set(Calendar.MINUTE, 0);
+        curTime.set(Calendar.SECOND, 0);
+
+        String startTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(curTime.getTime());
+
+        JSONObject response = new JSONObject();
+        List<FutureRecord> records = futureRecordDao.findByBrokerIdAndMarketDepthIdAndDatetimeAfter(
+                brokerId,
+                marketDepthId,
+                startTime );
+        response.put("history", records);
         try{
-            sendMessageToSession(session, ResponseWrapperFactory.createResponseString(ResponseWrapper.SUCCESS, "switch success"));
+            sendMessageToSession(session, ResponseWrapperFactory.createResponseString(ResponseWrapper.SUCCESS, response));
         }
         catch(IOException e){
             e.printStackTrace();
