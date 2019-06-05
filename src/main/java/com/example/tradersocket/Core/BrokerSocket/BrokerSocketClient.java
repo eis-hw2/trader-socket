@@ -36,7 +36,8 @@ public class BrokerSocketClient extends WebSocketClient {
     private Logger logger = LoggerFactory.getLogger("BrokerSocketClient");
     private int status;
 
-    private Integer lastVolume = 0;
+    private Integer lastTotalVolume = 0;
+    private Calendar lastTime = Calendar.getInstance();
 
     /**
      * Key: MarketDepthId
@@ -93,8 +94,18 @@ public class BrokerSocketClient extends WebSocketClient {
          * 持久化信息
          */
         float curPrice = marketQuotation.getChangePrice();
-        int curVolume = marketQuotation.getTotalVolume() - lastVolume;
         Calendar curTime = Calendar.getInstance();
+        int curVolume;
+        int curTotalVolume = marketQuotation.getTotalVolume();
+        // 判断是否是新的一天
+        if (curTime.get(Calendar.DAY_OF_WEEK) != lastTime.get(Calendar.DAY_OF_WEEK))
+            curVolume = curTotalVolume;
+        else
+            curVolume = curTotalVolume - lastTotalVolume;
+
+        lastTotalVolume = curTotalVolume;
+        lastTime = curTime;
+
         String datetime =  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(curTime.getTime());
 
         FutureRecord futureRecord = new FutureRecord();
