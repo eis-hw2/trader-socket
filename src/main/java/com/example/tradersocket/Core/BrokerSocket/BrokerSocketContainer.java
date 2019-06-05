@@ -85,4 +85,8 @@ public class BrokerSocketContainer {
     public void setFutureRecordDao(FutureRecordDao futureRecordDao) {
         this.futureRecordDao = futureRecordDao;
     }
+
+    public DataPair getDataPairByMarketDepthId(String marketDepthId){
+        return client.getDataPairByMarketDepthId(marketDepthId);
+    }
 }

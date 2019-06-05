@@ -2,6 +2,7 @@ package com.example.tradersocket.Service.Impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.example.tradersocket.Core.BrokerSocket.DataPair;
 import com.example.tradersocket.Dao.FutureRecordDao;
 import com.example.tradersocket.Domain.Entity.Broker;
 import com.example.tradersocket.Domain.Entity.FutureRecord;
@@ -86,6 +87,9 @@ public class WebSocketServiceImpl implements WebSocketService {
         logger.info("[WebSocket.onMessage] Raw Message:"+message);
         JSONObject body = JSON.parseObject(message);
 
+        /**
+         * 用户发送 JSON config，告诉我他需要哪个broker的哪个future的信息
+         */
         Integer brokerId = body.getInteger("brokerId");
         String marketDepthId = body.getString("marketDepthId");
 
@@ -113,7 +117,10 @@ public class WebSocketServiceImpl implements WebSocketService {
                 brokerId,
                 marketDepthId,
                 startTime );
+        DataPair dataPair = brokerService.getDataPairByBrokerIdAndMarketDepthId(brokerId, marketDepthId);
         response.put("history", records);
+        response.put("marketDepth", dataPair.getMarketDepth());
+        response.put("marketQuotation", dataPair.getMarketQuotation());
         try{
             sendMessageToSession(session, ResponseWrapperFactory.createResponseString(ResponseWrapper.SUCCESS, response));
         }

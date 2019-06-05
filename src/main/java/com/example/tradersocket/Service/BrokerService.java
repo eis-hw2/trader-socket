@@ -1,5 +1,6 @@
 package com.example.tradersocket.Service;
 
+import com.example.tradersocket.Core.BrokerSocket.DataPair;
 import com.example.tradersocket.Domain.Entity.Broker;
 import com.example.tradersocket.Domain.Entity.MarketDepth;
 
@@ -13,4 +14,6 @@ public interface BrokerService {
     List<Broker> findAll();
 
     Broker findById(Integer id);
+
+    DataPair getDataPairByBrokerIdAndMarketDepthId(Integer brokerId, String marketDepthId);
 }

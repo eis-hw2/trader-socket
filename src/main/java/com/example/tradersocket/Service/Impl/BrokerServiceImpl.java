@@ -3,6 +3,7 @@ package com.example.tradersocket.Service.Impl;
 
 import com.alibaba.fastjson.JSON;
 import com.example.tradersocket.Core.BrokerSocket.BrokerSocketContainer;
+import com.example.tradersocket.Core.BrokerSocket.DataPair;
 import com.example.tradersocket.Dao.BrokerDao;
 import com.example.tradersocket.Dao.FutureRecordDao;
 import com.example.tradersocket.Domain.Entity.Broker;
@@ -23,6 +24,10 @@ import java.util.concurrent.Executors;
 
 @Service
 public class BrokerServiceImpl implements BrokerService {
+    /**
+     * Key: BrokerId
+     * Value: BrokerSocketContainer
+     */
     private static ConcurrentHashMap<Integer, BrokerSocketContainer> brokerSocketContainers = new ConcurrentHashMap<>();
 
     private static Logger logger = LoggerFactory.getLogger("BrokerService");
@@ -39,6 +44,12 @@ public class BrokerServiceImpl implements BrokerService {
     @Bean
     public ExecutorService pool(){
         return Executors.newCachedThreadPool();
+    }
+
+    @Override
+    public DataPair getDataPairByBrokerIdAndMarketDepthId(Integer brokerId, String marketDepthId){
+        BrokerSocketContainer bsc = brokerSocketContainers.get(brokerId);
+        return bsc.getDataPairByMarketDepthId(marketDepthId);
     }
 
     private void socketInit(Broker broker){

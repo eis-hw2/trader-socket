@@ -36,17 +36,20 @@ public class BrokerSocketClient extends WebSocketClient {
     private Logger logger = LoggerFactory.getLogger("BrokerSocketClient");
     private int status;
 
-    private Integer lastTotalVolume = 0;
-    private Calendar lastTime = Calendar.getInstance();
-
     /**
      * Key: MarketDepthId
      * Value: MarketDepth & MarketQuotation
      */
-    private Map<String, DataPair> data = new HashMap<>();
+    private Map<String, DataPair> lastDataPair = new HashMap<>();
+    private Integer lastTotalVolume = 0;
+    private Calendar lastTime = Calendar.getInstance();
 
     private Integer brokerId;
     private BrokerSocketContainer brokerSocketContainer;
+
+    public DataPair getDataPairByMarketDepthId(String marketDepthId){
+        return lastDataPair.get(marketDepthId);
+    }
 
     public BrokerSocketClient(Broker broker, BrokerSocketContainer brokerSocketContainer, String id) throws URISyntaxException{
         super(new URI(broker.getWebSocket() + "/websocket/" + id));
@@ -81,14 +84,9 @@ public class BrokerSocketClient extends WebSocketClient {
         /**
          * 状态信息
          */
-        DataPair curFuture = data.get(marketDepthId);
-        if (curFuture == null){
-            curFuture = new DataPair();
-        }
-        curFuture.setMarketDepth(marketDepth);
-        curFuture.setMarketQuotation(marketQuotation);
-
-        data.put(marketDepthId, curFuture);
+        DataPair curData = new DataPair();
+        curData.setMarketDepth(marketDepth);
+        curData.setMarketQuotation(marketQuotation);
 
         /**
          * 持久化信息
@@ -105,6 +103,7 @@ public class BrokerSocketClient extends WebSocketClient {
 
         lastTotalVolume = curTotalVolume;
         lastTime = curTime;
+        lastDataPair.put(marketDepthId, curData);
 
         String datetime =  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(curTime.getTime());
 
