@@ -8,6 +8,7 @@ import com.example.tradersocket.Dao.BrokerDao;
 import com.example.tradersocket.Dao.FutureRecordDao;
 import com.example.tradersocket.Domain.Entity.Broker;
 import com.example.tradersocket.Domain.Entity.MarketDepth;
+import com.example.tradersocket.Exception.BrokerSocketNotExistException;
 import com.example.tradersocket.Service.BrokerService;
 import com.example.tradersocket.Service.WebSocketService;
 import org.slf4j.Logger;
@@ -49,6 +50,8 @@ public class BrokerServiceImpl implements BrokerService {
     @Override
     public DataPair getDataPairByBrokerIdAndMarketDepthId(Integer brokerId, String marketDepthId){
         BrokerSocketContainer bsc = brokerSocketContainers.get(brokerId);
+        if (bsc == null)
+            throw new BrokerSocketNotExistException("BrokerSocket "+brokerId+" not exist");
         return bsc.getDataPairByMarketDepthId(marketDepthId);
     }
 

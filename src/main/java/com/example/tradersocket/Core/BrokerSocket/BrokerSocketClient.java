@@ -62,13 +62,13 @@ public class BrokerSocketClient extends WebSocketClient {
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
         closedByContainer = false;
-        logger.info("[BrokerSocket.onOpen] "+ this.uri.toString() + " Connection Success");
+        logger.info("[BrokerSocketClient.onOpen] "+ this.uri.toString() + " Connection Success");
     }
 
     @Override
     public void onMessage(String msg) {
-        logger.info("[BrokerSocket.onMessage] URI: " + this.uri.toString());
-        logger.info("[BrokerSocket.onMessage] Message: " + msg);
+        logger.info("[BrokerSocketClient.onMessage] URI: " + this.uri.toString());
+        logger.info("[BrokerSocketClient.onMessage] Message: " + msg);
         
         JSONObject body = JSON.parseObject(msg);
         String mqStr = body.getString(MarketQuotation);
@@ -77,8 +77,8 @@ public class BrokerSocketClient extends WebSocketClient {
         MarketDepth marketDepth = JSON.parseObject(mdStr, MarketDepth.class);
         MarketQuotation marketQuotation = JSON.parseObject(mqStr, MarketQuotation.class);
 
-        logger.info("[BrokerSocket.onMessage] MarketDepth: " + JSON.toJSONString(marketDepth));
-        logger.info("[BrokerSocket.onMessage] MarketQuotation: " + JSON.toJSONString(marketQuotation));
+        logger.info("[BrokerSocketClient.onMessage] MarketDepth: " + JSON.toJSONString(marketDepth));
+        logger.info("[BrokerSocketClient.onMessage] MarketQuotation: " + JSON.toJSONString(marketQuotation));
 
         String marketDepthId = marketDepth.getId();
         /**
@@ -104,6 +104,10 @@ public class BrokerSocketClient extends WebSocketClient {
         lastTotalVolume = curTotalVolume;
         lastTime = curTime;
         lastDataPair.put(marketDepthId, curData);
+        logger.info("[BrokerSocketClient.onMessage] lastTotalVolume update: " + lastTotalVolume);
+        logger.info("[BrokerSocketClient.onMessage] lastTime update: " + lastTime);
+        logger.info("[BrokerSocketClient.onMessage] lastDataPair update: ("+marketDepthId+", "+JSON.toJSONString(curData)+")");
+
 
         String datetime =  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(curTime.getTime());
 
@@ -127,13 +131,13 @@ public class BrokerSocketClient extends WebSocketClient {
 
     @Override
     public void onClose(int i, String s, boolean b) {
-        logger.info("[BrokerSocket.onClose]" + this.uri.toString() + " Connection Closed");
+        logger.info("[BrokerSocketClient.onClose]" + this.uri.toString() + " Connection Closed");
         brokerSocketContainer.onClose();
     }
 
     @Override
     public void onError(Exception e) {
-        logger.info("[BrokerSocket.onError]" + this.uri.toString());
+        logger.info("[BrokerSocketClient.onError]" + this.uri.toString());
         e.printStackTrace();
     }
 
@@ -143,13 +147,13 @@ public class BrokerSocketClient extends WebSocketClient {
 
     public void init(){
         this.setStatus(CONNECTING);
-        logger.info("[BrokerSocket.init] " + this.uri + " Connecting");
+        logger.info("[BrokerSocketClient.init] " + this.uri + " Connecting");
 
         this.connect();
         while(!this.getReadyState().equals(READYSTATE.OPEN)){}
 
         this.setStatus(CONNECTED);
-        logger.info("[BrokerSocket.init] " + this.uri + " Connected");
+        logger.info("[BrokerSocketClient.init] " + this.uri + " Connected");
 
     }
 
