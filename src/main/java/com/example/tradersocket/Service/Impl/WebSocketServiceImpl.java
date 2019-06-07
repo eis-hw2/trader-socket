@@ -93,31 +93,20 @@ public class WebSocketServiceImpl implements WebSocketService {
         switch (commandType){
             case LOGIN:
             {
-                SessionWrapper cur = null;
-                for (SessionWrapper sw : sessionWrappers) {
-                    if (sw.getSid().equals(sid)) {
-                        cur = sw;
-                        break;
-                    }
-                }
+                SessionWrapper cur = getSessionWrapperBySid(sid);
                 if (cur == null) {
                     send(session, ResponseWrapperFactory.createResponseString(
                             ResponseWrapper.ERROR, "SessionWrapper not found"));
                     return;
                 }
                 JSONObject body = msg.getJSONObject("body");
-                String username = body.getString("username");
-                String token = body.getString("token");
-                String tokenInRedis = (String)redisService.get(username);
-                if (tokenInRedis.equals(token)) {
-                    cur.setLogin(true);
-                    send(session, ResponseWrapperFactory.createResponseString(
-                            ResponseWrapper.SUCCESS, "Login Success"));
-                }
-                else {
+                boolean success = loginProcess(cur, body);
+                if (!success){
                     send(session, ResponseWrapperFactory.createResponseString(
                             ResponseWrapper.ERROR, "Login Failure"));
+                    return;
                 }
+                switchProcess(cur, body);
                 break;
             }
             case SWITCH:
@@ -126,13 +115,7 @@ public class WebSocketServiceImpl implements WebSocketService {
                  * 用户发送 brokerId & marketDepthId
                  * 告诉我他需要哪个broker的哪个future的信息
                  */
-                SessionWrapper cur = null;
-                for (SessionWrapper sw : sessionWrappers) {
-                    if (sw.getSid().equals(sid)) {
-                        cur = sw;
-                        break;
-                    }
-                }
+                SessionWrapper cur = getSessionWrapperBySid(sid);
                 if (cur == null) {
                     send(session, ResponseWrapperFactory.createResponseString(
                             ResponseWrapper.ERROR, "SessionWrapper not found"));
@@ -143,44 +126,74 @@ public class WebSocketServiceImpl implements WebSocketService {
                     break;
                 }
 
-
                 JSONObject body = msg.getJSONObject("body");
-                Integer brokerId = body.getInteger("brokerId");
-                String marketDepthId = body.getString("marketDepthId");
 
-                logger.info("[WebSocket.onMessage] BrokerId:" + brokerId);
-                logger.info("[WebSocket.onMessage] MarketDepthId:" + marketDepthId);
-                Broker broker = brokerService.findById(brokerId);
+                switchProcess(cur, body);
 
-                cur.setBroker(broker);
-                cur.setMarketDepthId(marketDepthId);
-
-                Calendar curTime = Calendar.getInstance();
-                curTime.set(Calendar.HOUR_OF_DAY, 0);
-                curTime.set(Calendar.MINUTE, 0);
-                curTime.set(Calendar.SECOND, 0);
-
-                String startTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(curTime.getTime());
-
-                JSONObject response = new JSONObject();
-                List<FutureRecord> records = futureRecordDao.findByBrokerIdAndMarketDepthIdAndDatetimeAfter(
-                        brokerId,
-                        marketDepthId,
-                        startTime);
-                DataPair dataPair = brokerService.getDataPairByBrokerIdAndMarketDepthId(brokerId, marketDepthId);
-                response.put("history", records);
-                response.put("marketDepth", dataPair == null ? null : dataPair.getMarketDepth());
-                response.put("marketQuotation", dataPair == null ? null : dataPair.getMarketQuotation());
-
-                send(session, ResponseWrapperFactory.createResponseString(
-                        ResponseWrapper.SUCCESS, response));
-                //logger.info("[WebSocket.onMessage] Init data:"+response.toJSONString());
                 break;
             }
             default:
                 send(session, ResponseWrapperFactory.createResponseString(
                         ResponseWrapper.ERROR, "Unknown type:" + commandType));
         }
+    }
+
+    private SessionWrapper getSessionWrapperBySid(String sid){
+        for (SessionWrapper sw : sessionWrappers) {
+            if (sw.getSid().equals(sid)) {
+                return sw;
+            }
+        }
+        return null;
+    }
+
+    private boolean loginProcess(SessionWrapper cur, JSONObject body){
+        String username = body.getString("username");
+        String token = body.getString("token");
+        String tokenInRedis = (String)redisService.get(username);
+        if (tokenInRedis.equals(token)) {
+            cur.setLogin(true);
+            send(cur, ResponseWrapperFactory.createResponseString(
+                    ResponseWrapper.SUCCESS, "Login Success"));
+            return true;
+        }
+        else {
+            send(cur, ResponseWrapperFactory.createResponseString(
+                    ResponseWrapper.ERROR, "Login Failure"));
+            return false;
+        }
+    }
+
+    private void switchProcess(SessionWrapper cur, JSONObject body){
+        Integer brokerId = body.getInteger("brokerId");
+        String marketDepthId = body.getString("marketDepthId");
+
+        logger.info("[WebSocket.onMessage] BrokerId:" + brokerId);
+        logger.info("[WebSocket.onMessage] MarketDepthId:" + marketDepthId);
+        Broker broker = brokerService.findById(brokerId);
+
+        cur.setBroker(broker);
+        cur.setMarketDepthId(marketDepthId);
+
+        Calendar curTime = Calendar.getInstance();
+        curTime.set(Calendar.HOUR_OF_DAY, 0);
+        curTime.set(Calendar.MINUTE, 0);
+        curTime.set(Calendar.SECOND, 0);
+
+        String startTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(curTime.getTime());
+
+        JSONObject response = new JSONObject();
+        List<FutureRecord> records = futureRecordDao.findByBrokerIdAndMarketDepthIdAndDatetimeAfter(
+                brokerId,
+                marketDepthId,
+                startTime);
+        DataPair dataPair = brokerService.getDataPairByBrokerIdAndMarketDepthId(brokerId, marketDepthId);
+        response.put("history", records);
+        response.put("marketDepth", dataPair == null ? null : dataPair.getMarketDepth());
+        response.put("marketQuotation", dataPair == null ? null : dataPair.getMarketQuotation());
+
+        send(cur, ResponseWrapperFactory.createResponseString(
+                ResponseWrapper.SUCCESS, response));
     }
 
     @Override
