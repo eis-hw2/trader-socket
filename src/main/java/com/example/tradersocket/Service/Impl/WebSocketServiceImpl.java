@@ -165,7 +165,8 @@ public class WebSocketServiceImpl implements WebSocketService {
         logger.info("[WebSocket.broadcast] BrokerId:" + brokerId);
         logger.info("[WebSocket.broadcast] Message:" + message);
         sessionWrappers.stream()
-                .filter(e -> e.getBroker().getId().equals(brokerId))
+                .filter(e -> e.getBroker() != null
+                        && e.getBroker().getId().equals(brokerId))
                 .forEach(sessionWrapper -> {
                     try {
                         sendMessageToSessionWrapper(sessionWrapper, message);
@@ -179,8 +180,9 @@ public class WebSocketServiceImpl implements WebSocketService {
         logger.info("[WebSocket.broadcast] MarketDepthId:" + marketDepthId);
         logger.info("[WebSocket] Message:" + message);
         sessionWrappers.stream()
-                .filter(e -> brokerId.equals(e.getBroker().getId()) &&
-                                marketDepthId.equals(e.getMarketDepthId()))
+                .filter(e -> e.getBroker() != null
+                        && brokerId.equals(e.getBroker().getId())
+                        && marketDepthId.equals(e.getMarketDepthId()))
                 .forEach(sessionWrapper -> {
                     try {
                         sendMessageToSessionWrapper(sessionWrapper, message);
