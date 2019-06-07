@@ -78,7 +78,7 @@ public class WebSocketServiceImpl implements WebSocketService {
         if (isRemoved) {
             logger.info("[WebSocket.onClose] Connection Closed, Number of Connection:" + getOnlineCount());
         } else {
-            logger.error("[WebSocket.onClose] Remove Error");
+            logger.error("[WebSocket.onClose] Remove Error, Number of Connection:" + getOnlineCount());
         }
     }
 
@@ -123,6 +123,7 @@ public class WebSocketServiceImpl implements WebSocketService {
         response.put("marketQuotation", dataPair ==null ? null : dataPair.getMarketQuotation());
         try{
             sendMessageToSession(session, ResponseWrapperFactory.createResponseString(ResponseWrapper.SUCCESS, response));
+            logger.info("[WebSocket.onMessage] Init data:"+response.toJSONString());
         }
         catch(IOException e){
             e.printStackTrace();
