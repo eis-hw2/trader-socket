@@ -1,4 +1,4 @@
-package com.example.tradersocket.Config;
+package com.example.tradersocket.Config.Swagger;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

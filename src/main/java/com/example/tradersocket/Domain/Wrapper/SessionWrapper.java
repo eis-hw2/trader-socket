@@ -12,6 +12,7 @@ public class SessionWrapper {
 
     private Broker broker;
     private String marketDepthId;
+    private boolean login = false;
 
     public SessionWrapper(){
 
@@ -52,5 +53,13 @@ public class SessionWrapper {
 
     public void setMarketDepthId(String marketDepthId) {
         this.marketDepthId = marketDepthId;
+    }
+
+    public boolean isLogin() {
+        return login;
+    }
+
+    public void setLogin(boolean login) {
+        this.login = login;
     }
 }

@@ -12,7 +12,7 @@ public interface WebSocketService {
 
     void onError(Session session, Throwable error, String sid);
 
-    void sendMessage(String sid, String message) throws IOException;
+    void sendMessage(String sid, String message);
 
     void broadcast(String message);
 
