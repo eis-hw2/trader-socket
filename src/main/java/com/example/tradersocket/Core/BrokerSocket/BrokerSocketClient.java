@@ -27,6 +27,7 @@ public class BrokerSocketClient extends WebSocketClient {
 
     private final static String MarketQuotation = "marketQuotation";
     private final static String MarketDepth = "marketDepth";
+    private final static String Timestamp = "timestamp";
     private final static String CurPrice = "curPrice";
     private final static String CurVolume = "curVolume";
     private final static String CurTime = "curTime";
@@ -73,6 +74,7 @@ public class BrokerSocketClient extends WebSocketClient {
         JSONObject body = JSON.parseObject(msg);
         String mqStr = body.getString(MarketQuotation);
         String mdStr = body.getString(MarketDepth);
+        long timestamp = body.getLongValue(Timestamp);
 
         MarketDepth marketDepth = JSON.parseObject(mdStr, MarketDepth.class);
         MarketQuotation marketQuotation = JSON.parseObject(mqStr, MarketQuotation.class);
@@ -87,6 +89,7 @@ public class BrokerSocketClient extends WebSocketClient {
         DataPair curData = new DataPair();
         curData.setMarketDepth(marketDepth);
         curData.setMarketQuotation(marketQuotation);
+        curData.setTimestamp(timestamp);
 
         /**
          * 持久化信息
@@ -125,6 +128,7 @@ public class BrokerSocketClient extends WebSocketClient {
         retweet.put(CurTime, datetime);
         retweet.put(MarketQuotation, marketQuotation);
         retweet.put(MarketDepth, marketDepth);
+        retweet.put(Timestamp, timestamp);
 
         this.getBrokerSocketContainer().getWebSocketService().broadcastByBrokerIdAndMarketDepthId(retweet.toJSONString(), brokerId, marketDepthId);
     }
