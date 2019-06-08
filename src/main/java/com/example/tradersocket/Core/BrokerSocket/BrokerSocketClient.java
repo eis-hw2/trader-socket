@@ -114,14 +114,21 @@ public class BrokerSocketClient extends WebSocketClient {
 
         String datetime =  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(curTime.getTime());
 
+        /**
+         * 持久化信息装载
+         */
         FutureRecord futureRecord = new FutureRecord();
         futureRecord.setBrokerId(brokerId);
         futureRecord.setDatetime(datetime);
         futureRecord.setMarketDepthId(marketDepthId);
         futureRecord.setPrice(curPrice);
         futureRecord.setVolume(curVolume);
+        futureRecord.setTimestamp(timestamp);
         this.getBrokerSocketContainer().getFutureRecordDao().save(futureRecord);
 
+        /**
+         * 转发信息
+         */
         JSONObject retweet = new JSONObject();
         retweet.put(CurPrice, curPrice);
         retweet.put(CurVolume, curVolume);

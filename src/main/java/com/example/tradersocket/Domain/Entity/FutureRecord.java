@@ -16,6 +16,7 @@ public class FutureRecord {
     private float price;
     private float volume;
     private String datetime;
+    private long timestamp;
 
     public float getPrice() {
         return price;
@@ -63,5 +64,13 @@ public class FutureRecord {
 
     public void setMarketDepthId(String marketDepthId) {
         this.marketDepthId = marketDepthId;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
     }
 }
