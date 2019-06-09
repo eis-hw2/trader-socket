@@ -89,4 +89,8 @@ public class BrokerSocketContainer {
     public DataPair getDataPairByMarketDepthId(String marketDepthId){
         return client.getDataPairByMarketDepthId(marketDepthId);
     }
+
+    public void resetStatus(){
+        client.resetStatus();
+    }
 }

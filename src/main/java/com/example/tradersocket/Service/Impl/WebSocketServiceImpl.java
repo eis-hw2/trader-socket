@@ -189,8 +189,17 @@ public class WebSocketServiceImpl implements WebSocketService {
                 startTime);
         DataPair dataPair = brokerService.getDataPairByBrokerIdAndMarketDepthId(brokerId, marketDepthId);
         response.put("history", records);
-        response.put("marketDepth", dataPair == null ? null : dataPair.getMarketDepth());
-        response.put("marketQuotation", dataPair == null ? null : dataPair.getMarketQuotation());
+        if (dataPair == null){
+            response.put("marketDepth", null);
+            response.put("marketQuotation", null);
+            response.put("curVolume", null);
+        }
+        else{
+            response.put("marketDepth", dataPair.getMarketDepth());
+            response.put("marketQuotation", dataPair.getMarketQuotation());
+            response.put("curVolume", dataPair.getCurVolume());
+        }
+
 
         send(cur, ResponseWrapperFactory.createResponseString(
                 ResponseWrapper.SUCCESS, response));

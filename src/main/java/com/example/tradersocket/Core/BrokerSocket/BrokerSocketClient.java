@@ -10,6 +10,7 @@ import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -42,8 +43,6 @@ public class BrokerSocketClient extends WebSocketClient {
      * Value: MarketDepth & MarketQuotation
      */
     private Map<String, DataPair> lastDataPair = new HashMap<>();
-    private Integer lastTotalVolume = 0;
-    private Calendar lastTime = Calendar.getInstance();
 
     private Integer brokerId;
     private BrokerSocketContainer brokerSocketContainer;
@@ -66,6 +65,10 @@ public class BrokerSocketClient extends WebSocketClient {
         logger.info("[BrokerSocketClient.onOpen] "+ this.uri.toString() + " Connection Success");
     }
 
+    public void resetStatus(){
+        lastDataPair = new HashMap<>();
+    }
+
     @Override
     public void onMessage(String msg) {
         logger.info("[BrokerSocketClient.onMessage] URI: " + this.uri.toString());
@@ -86,29 +89,33 @@ public class BrokerSocketClient extends WebSocketClient {
         /**
          * 状态信息
          */
+        DataPair lastData = lastDataPair.get(marketDepthId);
         DataPair curData = new DataPair();
+
         curData.setMarketDepth(marketDepth);
         curData.setMarketQuotation(marketQuotation);
         curData.setTimestamp(timestamp);
+
+        int totalVolume = marketQuotation.getTotalVolume();
+        if (lastData == null){
+            curData.setCurVolume(totalVolume);
+        }
+        else{
+            int lastVolume = lastData.getMarketQuotation().getTotalVolume();
+            curData.setCurVolume(lastVolume - totalVolume);
+        }
+
+
 
         /**
          * 持久化信息
          */
         float curPrice = marketQuotation.getChangePrice();
         Calendar curTime = Calendar.getInstance();
-        int curVolume;
+        int curVolume = curData.getCurVolume();
         int curTotalVolume = marketQuotation.getTotalVolume();
-        // 判断是否是新的一天
-        if (curTime.get(Calendar.DAY_OF_WEEK) != lastTime.get(Calendar.DAY_OF_WEEK))
-            curVolume = curTotalVolume;
-        else
-            curVolume = curTotalVolume - lastTotalVolume;
 
-        lastTotalVolume = curTotalVolume;
-        lastTime = curTime;
         lastDataPair.put(marketDepthId, curData);
-        logger.info("[BrokerSocketClient.onMessage] lastTotalVolume update: " + lastTotalVolume);
-        logger.info("[BrokerSocketClient.onMessage] lastTime update: " + lastTime);
         logger.info("[BrokerSocketClient.onMessage] lastDataPair update: ("+marketDepthId+", "+JSON.toJSONString(curData)+")");
 
 

@@ -15,10 +15,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -41,6 +43,13 @@ public class BrokerServiceImpl implements BrokerService {
     private ExecutorService pool;
     @Autowired
     private FutureRecordDao futureRecordDao;
+
+    @Scheduled(cron = "0 0 0 * * ?")
+    private void resetStatus(){
+        for (Map.Entry<Integer, BrokerSocketContainer> entry: brokerSocketContainers.entrySet()){
+            entry.getValue().resetStatus();
+        }
+    }
 
     @Bean
     public ExecutorService pool(){

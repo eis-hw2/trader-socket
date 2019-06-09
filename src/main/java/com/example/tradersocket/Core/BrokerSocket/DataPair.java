@@ -6,6 +6,7 @@ import com.example.tradersocket.Domain.Entity.MarketQuotation;
 public class DataPair {
     private MarketQuotation marketQuotation;
     private MarketDepth marketDepth;
+    private int curVolume;
     private long timestamp;
 
     public MarketQuotation getMarketQuotation() {
@@ -30,5 +31,13 @@ public class DataPair {
 
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public int getCurVolume() {
+        return curVolume;
+    }
+
+    public void setCurVolume(int curVolume) {
+        this.curVolume = curVolume;
     }
 }
