@@ -8,9 +8,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class BrokerSocketContainer {
+    public final static short INIT = 0;
+    public final static short CONNECTING = 1;
+    public final static short CONNECTED = 2;
+    public final static short ERROR = 3;
+
     private Logger logger = LoggerFactory.getLogger("BrokerSocketContainer");
 
     private BrokerSocketClient client;
@@ -18,6 +25,9 @@ public class BrokerSocketContainer {
     private WebSocketService webSocketService;
     private FutureRecordDao futureRecordDao;
     private UUID id;
+
+    private Map<String, DataPair> lastDataPair = new HashMap<>();
+    private int status;
 
     public BrokerSocketContainer(Broker broker,
                                  WebSocketService webSocketService,
@@ -87,10 +97,33 @@ public class BrokerSocketContainer {
     }
 
     public DataPair getDataPairByMarketDepthId(String marketDepthId){
-        return client.getDataPairByMarketDepthId(marketDepthId);
+        return getDataPairByMarketDepthId(marketDepthId);
+    }
+
+    public void broadcast(String msg, String marketDepthId){
+        webSocketService.broadcastByBrokerIdAndMarketDepthId(
+                msg,
+                this.broker.getId(),
+                marketDepthId);
     }
 
     public void resetStatus(){
-        client.resetStatus();
+        lastDataPair = new HashMap<>();
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    public Map<String, DataPair> getLastDataPair() {
+        return lastDataPair;
+    }
+
+    public void setLastDataPair(Map<String, DataPair> lastDataPair) {
+        this.lastDataPair = lastDataPair;
     }
 }

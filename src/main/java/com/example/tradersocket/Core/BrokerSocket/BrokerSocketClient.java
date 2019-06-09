@@ -21,11 +21,6 @@ import java.util.Map;
 
 public class BrokerSocketClient extends WebSocketClient {
 
-    public final static short INIT = 0;
-    public final static short CONNECTING = 1;
-    public final static short CONNECTED = 2;
-    public final static short ERROR = 3;
-
     private final static String MarketQuotation = "marketQuotation";
     private final static String MarketDepth = "marketDepth";
     private final static String Timestamp = "timestamp";
@@ -36,37 +31,26 @@ public class BrokerSocketClient extends WebSocketClient {
     private boolean closedByContainer = false;
 
     private Logger logger = LoggerFactory.getLogger("BrokerSocketClient");
-    private int status;
+
 
     /**
      * Key: MarketDepthId
      * Value: MarketDepth & MarketQuotation
      */
-    private Map<String, DataPair> lastDataPair = new HashMap<>();
 
-    private Integer brokerId;
     private BrokerSocketContainer brokerSocketContainer;
-
-    public DataPair getDataPairByMarketDepthId(String marketDepthId){
-        return lastDataPair.get(marketDepthId);
-    }
 
     public BrokerSocketClient(Broker broker, BrokerSocketContainer brokerSocketContainer, String id) throws URISyntaxException{
         super(new URI(broker.getWebSocket() + "/websocket/" + id));
         logger.info("[BrokerSocketClient.Contructor] " + this.getURI());
         this.brokerSocketContainer = brokerSocketContainer;
-        this.brokerId = broker.getId();
-        this.status = INIT;
+        this.brokerSocketContainer.setStatus(BrokerSocketContainer.INIT);
     }
 
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
         closedByContainer = false;
         logger.info("[BrokerSocketClient.onOpen] "+ this.uri.toString() + " Connection Success");
-    }
-
-    public void resetStatus(){
-        lastDataPair = new HashMap<>();
     }
 
     @Override
@@ -89,7 +73,8 @@ public class BrokerSocketClient extends WebSocketClient {
         /**
          * 状态信息
          */
-        DataPair lastData = lastDataPair.get(marketDepthId);
+        Map<String, DataPair> dataMap = this.brokerSocketContainer.getLastDataPair();
+        DataPair lastData = dataMap.get(marketDepthId);
         DataPair curData = new DataPair();
 
         curData.setMarketDepth(marketDepth);
@@ -106,7 +91,8 @@ public class BrokerSocketClient extends WebSocketClient {
         }
 
         // update status info
-        lastData = curData;
+        dataMap.put(marketDepthId, curData);
+        this.brokerSocketContainer.setLastDataPair(dataMap);
 
 
 
@@ -118,7 +104,7 @@ public class BrokerSocketClient extends WebSocketClient {
         int curVolume = curData.getCurVolume();
         int curTotalVolume = marketQuotation.getTotalVolume();
 
-        lastDataPair.put(marketDepthId, curData);
+        this.brokerSocketContainer.getLastDataPair().put(marketDepthId, curData);
         logger.info("[BrokerSocketClient.onMessage] lastDataPair update: ("+marketDepthId+", "+JSON.toJSONString(curData)+")");
 
 
@@ -128,7 +114,7 @@ public class BrokerSocketClient extends WebSocketClient {
          * 持久化信息装载
          */
         FutureRecord futureRecord = new FutureRecord();
-        futureRecord.setBrokerId(brokerId);
+        futureRecord.setBrokerId(this.brokerSocketContainer.getBroker().getId());
         futureRecord.setDatetime(datetime);
         futureRecord.setMarketDepthId(marketDepthId);
         futureRecord.setPrice(curPrice);
@@ -147,7 +133,7 @@ public class BrokerSocketClient extends WebSocketClient {
         retweet.put(MarketDepth, marketDepth);
         retweet.put(Timestamp, timestamp);
 
-        this.getBrokerSocketContainer().getWebSocketService().broadcastByBrokerIdAndMarketDepthId(retweet.toJSONString(), brokerId, marketDepthId);
+        this.brokerSocketContainer.broadcast(retweet.toJSONString(), marketDepthId);
     }
 
     @Override
@@ -163,28 +149,22 @@ public class BrokerSocketClient extends WebSocketClient {
     }
 
     public void reconnect(){
+        this.brokerSocketContainer.setStatus(BrokerSocketContainer.ERROR);
         init();
     }
 
     public void init(){
-        this.setStatus(CONNECTING);
+        this.brokerSocketContainer.setStatus(BrokerSocketContainer.CONNECTING);
         logger.info("[BrokerSocketClient.init] " + this.uri + " Connecting");
 
         this.connect();
         while(!this.getReadyState().equals(READYSTATE.OPEN)){}
 
-        this.setStatus(CONNECTED);
+        this.brokerSocketContainer.setStatus(BrokerSocketContainer.CONNECTED);
         logger.info("[BrokerSocketClient.init] " + this.uri + " Connected");
 
     }
 
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
-    }
 
     public BrokerSocketContainer getBrokerSocketContainer() {
         return brokerSocketContainer;
