@@ -97,7 +97,7 @@ public class BrokerSocketContainer {
     }
 
     public DataPair getDataPairByMarketDepthId(String marketDepthId){
-        return getDataPairByMarketDepthId(marketDepthId);
+        return lastDataPair.get(marketDepthId);
     }
 
     public void broadcast(String msg, String marketDepthId){
