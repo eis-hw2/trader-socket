@@ -105,6 +105,9 @@ public class BrokerSocketClient extends WebSocketClient {
             curData.setCurVolume(lastVolume - totalVolume);
         }
 
+        // update status info
+        lastData = curData;
+
 
 
         /**
