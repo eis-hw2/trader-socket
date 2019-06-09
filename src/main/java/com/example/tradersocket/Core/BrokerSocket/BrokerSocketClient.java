@@ -102,7 +102,7 @@ public class BrokerSocketClient extends WebSocketClient {
         }
         else{
             int lastVolume = lastData.getMarketQuotation().getTotalVolume();
-            curData.setCurVolume(lastVolume - totalVolume);
+            curData.setCurVolume(totalVolume - lastVolume);
         }
 
         // update status info
