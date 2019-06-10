@@ -237,8 +237,8 @@ public class WebSocketServiceImpl implements WebSocketService {
 
     @Override
     public void broadcast(String message) {
-        logger.info("[WebSocket] Send Message to All");
-        logger.info(message);
+        //logger.info("[WebSocket] Send Message to All");
+        //logger.info(message);
         sessionWrappers.stream()
                 .filter(e -> e.isLogin())
                 .forEach(sessionWrapper -> {
@@ -248,8 +248,8 @@ public class WebSocketServiceImpl implements WebSocketService {
 
     @Override
     public void broadcastByBrokerId(String message, Integer brokerId) {
-        logger.info("[WebSocket.broadcast] BrokerId:" + brokerId);
-        logger.info("[WebSocket.broadcast] Message:" + message);
+        //logger.info("[WebSocket.broadcast] BrokerId:" + brokerId);
+        //logger.info("[WebSocket.broadcast] Message:" + message);
         sessionWrappers.stream()
                 .filter(e -> e.isLogin()
                         && e.getBroker() != null
@@ -261,9 +261,9 @@ public class WebSocketServiceImpl implements WebSocketService {
 
     @Override
     public void broadcastByBrokerIdAndMarketDepthId(String message, Integer brokerId, String marketDepthId) {
-        logger.info("[WebSocket.broadcast] BrokerId:" + brokerId);
-        logger.info("[WebSocket.broadcast] MarketDepthId:" + marketDepthId);
-        logger.info("[WebSocket] Message:" + message);
+        //logger.info("[WebSocket.broadcast] BrokerId:" + brokerId);
+        //logger.info("[WebSocket.broadcast] MarketDepthId:" + marketDepthId);
+        //logger.info("[WebSocket.broadcast] Message:" + message);
         sessionWrappers.stream()
                 .filter(e -> e.isLogin()
                         && e.getBroker() != null

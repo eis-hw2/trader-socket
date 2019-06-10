@@ -55,11 +55,11 @@ public class BrokerServiceImpl implements BrokerService {
 
     @Scheduled(cron = "0/1 * * * * ? ")
     private void broadcast(){
-        logger.info("[BrokerService.broadcast] Start");
+        //logger.info("[BrokerService.broadcast] Start");
         brokerSocketContainers.entrySet().stream().forEach(e -> {
             pool.execute(() ->e.getValue().broadcastAll());
         });
-        logger.info("[BrokerService.broadcast] End");
+        //logger.info("[BrokerService.broadcast] End");
     }
 
     @Bean
