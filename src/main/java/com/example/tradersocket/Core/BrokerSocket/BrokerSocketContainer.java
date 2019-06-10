@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 
 public class BrokerSocketContainer {
     public final static short INIT = 0;
@@ -29,10 +30,13 @@ public class BrokerSocketContainer {
 
     private Map<String, DataPair> lastDataPair = new HashMap<>();
     private int status;
+    private ExecutorService pool;
 
     public BrokerSocketContainer(Broker broker,
                                  WebSocketService webSocketService,
-                                 FutureRecordDao futureRecordDao){
+                                 FutureRecordDao futureRecordDao,
+                                 ExecutorService pool){
+        this.pool = pool;
         this.id = UUID.randomUUID();
         this.broker = broker;
         this.futureRecordDao = futureRecordDao;
@@ -108,8 +112,10 @@ public class BrokerSocketContainer {
                 marketDepthId);
     }
 
-    public FutureRecord saveFutureRecord(FutureRecord fr){
-        return futureRecordDao.save(fr);
+    public void saveFutureRecord(FutureRecord fr){
+        pool.execute(() -> {
+            futureRecordDao.save(fr);
+        });
     }
 
     public void resetStatus(){

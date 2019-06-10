@@ -13,6 +13,7 @@ public class SessionWrapper {
     private Broker broker;
     private String marketDepthId;
     private boolean login = false;
+    private int intervalSecond;
 
     public SessionWrapper(){
 
@@ -61,5 +62,13 @@ public class SessionWrapper {
 
     public void setLogin(boolean login) {
         this.login = login;
+    }
+
+    public Integer getIntervalSecond() {
+        return intervalSecond;
+    }
+
+    public void setIntervalSecond(Integer intervalSecond) {
+        this.intervalSecond = intervalSecond;
     }
 }

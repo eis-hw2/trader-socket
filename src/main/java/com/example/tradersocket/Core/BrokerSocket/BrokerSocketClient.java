@@ -120,6 +120,8 @@ public class BrokerSocketClient extends WebSocketClient {
         futureRecord.setVolume(curVolume);
         futureRecord.setTimestamp(timestamp);
         logger.info("[BrokerSocketClient.onMessage] Save FutureRecord: " + JSON.toJSONString(futureRecord));
+
+
         this.brokerSocketContainer.saveFutureRecord(futureRecord);
 
         /**

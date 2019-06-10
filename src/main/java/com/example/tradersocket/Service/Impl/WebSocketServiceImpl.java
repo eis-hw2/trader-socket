@@ -42,6 +42,8 @@ public class WebSocketServiceImpl implements WebSocketService {
     FutureRecordDao futureRecordDao;
     @Autowired
     RedisService redisService;
+    @Autowired
+    FutureRecordServiceImpl futureRecordService;
 
     public static CopyOnWriteArraySet<SessionWrapper> getSessionWrappers(){
         return sessionWrappers;
@@ -165,7 +167,7 @@ public class WebSocketServiceImpl implements WebSocketService {
     }
 
     private void switchProcess(SessionWrapper cur, JSONObject body){
-        Integer brokerId = body.getInteger("brokerId");
+        int brokerId = body.getIntValue("brokerId");
         String marketDepthId = body.getString("marketDepthId");
 
         logger.info("[WebSocket.onMessage] BrokerId:" + brokerId);
@@ -174,6 +176,7 @@ public class WebSocketServiceImpl implements WebSocketService {
 
         cur.setBroker(broker);
         cur.setMarketDepthId(marketDepthId);
+        cur.setIntervalSecond(body.getIntValue("intervalSecond"));
 
         Calendar curTime = Calendar.getInstance();
         curTime.set(Calendar.HOUR_OF_DAY, 0);
@@ -183,10 +186,20 @@ public class WebSocketServiceImpl implements WebSocketService {
         String startTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(curTime.getTime());
 
         JSONObject response = new JSONObject();
-        List<FutureRecord> records = futureRecordDao.findByBrokerIdAndMarketDepthIdAndDatetimeAfter(
+        int intervalSecond = cur.getIntervalSecond();
+        List<FutureRecord> records;
+        if (intervalSecond <= 0)
+            records = futureRecordDao.findByBrokerIdAndMarketDepthIdAndDatetimeAfter(
                 brokerId,
                 marketDepthId,
                 startTime);
+        else
+            records = futureRecordService.findByBrokerIdAndMarketDepthIdAndDatetimeAfter(
+                    brokerId,
+                    marketDepthId,
+                    startTime,
+                    intervalSecond
+            );
         DataPair dataPair = brokerService.getDataPairByBrokerIdAndMarketDepthId(brokerId, marketDepthId);
         response.put("history", records);
         if (dataPair == null){
@@ -199,7 +212,6 @@ public class WebSocketServiceImpl implements WebSocketService {
             response.put("marketQuotation", dataPair.getMarketQuotation());
             response.put("curVolume", dataPair.getCurVolume());
         }
-
 
         send(cur, ResponseWrapperFactory.createResponseString(
                 ResponseWrapper.SUCCESS, response));

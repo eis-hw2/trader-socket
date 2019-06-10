@@ -66,7 +66,11 @@ public class BrokerServiceImpl implements BrokerService {
 
     private void socketInit(Broker broker){
         logger.info("[BrokerService.init] start BrokerId: " + broker.getId());
-        BrokerSocketContainer brokerSocket = new BrokerSocketContainer(broker, webSocketService, futureRecordDao);
+        BrokerSocketContainer brokerSocket = new BrokerSocketContainer(
+                broker,
+                webSocketService,
+                futureRecordDao,
+                pool);
         brokerSocketContainers.put(broker.getId(), brokerSocket);
         brokerSocket.init();
         logger.info("[BrokerService.init] end BrokerId: " + broker.getId());
