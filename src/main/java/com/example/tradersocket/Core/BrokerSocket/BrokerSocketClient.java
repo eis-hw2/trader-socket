@@ -135,6 +135,7 @@ public class BrokerSocketClient extends WebSocketClient {
         toRetweet.put(MarketDepth, marketDepth);
         toRetweet.put(Timestamp, timestamp);
 
+        logger.info("[BrokerSocketClient.onMessage] Update ToReTweet:" + toRetweet.toJSONString());
         this.brokerSocketContainer.getToRetweet().put(marketDepthId, toRetweet);
     }
 
