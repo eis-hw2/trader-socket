@@ -1,5 +1,6 @@
 package com.example.tradersocket.Core.BrokerSocket;
 
+import com.alibaba.fastjson.JSONObject;
 import com.example.tradersocket.Dao.FutureRecordDao;
 import com.example.tradersocket.Domain.Entity.Broker;
 import com.example.tradersocket.Domain.Entity.FutureRecord;
@@ -28,9 +29,13 @@ public class BrokerSocketContainer {
     private FutureRecordDao futureRecordDao;
     private UUID id;
 
+    // 存储的状态信息
     private Map<String, DataPair> lastDataPair = new HashMap<>();
     private int status;
     private ExecutorService pool;
+
+    // 实际发送给用户的封装过的信息
+    private Map<String, JSONObject> toRetweet = new HashMap<>();
 
     public BrokerSocketContainer(Broker broker,
                                  WebSocketService webSocketService,
@@ -105,11 +110,26 @@ public class BrokerSocketContainer {
         return lastDataPair.get(marketDepthId);
     }
 
-    public void broadcast(String msg, String marketDepthId){
+    private void broadcast(String msg, String marketDepthId){
         webSocketService.broadcastByBrokerIdAndMarketDepthId(
                 msg,
                 this.broker.getId(),
                 marketDepthId);
+    }
+
+    public void broadcastByMarketDepthId(String marketDepthId){
+        String msg = toRetweet.get(marketDepthId).toJSONString();
+        broadcast(msg, marketDepthId);
+    }
+
+    public void broadcastAll(){
+        toRetweet.entrySet().stream().forEach(e -> {
+            String msg = e.getValue().toJSONString();
+            String marketDepthId = e.getKey();
+
+            logger.info("[BrokerSocketContainer.broadcastAll] "+broker.getId()+"."+marketDepthId+":"+msg);
+            broadcast(msg, marketDepthId);
+        });
     }
 
     public void saveFutureRecord(FutureRecord fr){
@@ -136,5 +156,13 @@ public class BrokerSocketContainer {
 
     public void setLastDataPair(Map<String, DataPair> lastDataPair) {
         this.lastDataPair = lastDataPair;
+    }
+
+    public Map<String, JSONObject> getToRetweet() {
+        return toRetweet;
+    }
+
+    public void setToRetweet(Map<String, JSONObject> toRetweet) {
+        this.toRetweet = toRetweet;
     }
 }

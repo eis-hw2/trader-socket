@@ -127,15 +127,15 @@ public class BrokerSocketClient extends WebSocketClient {
         /**
          * 转发信息
          */
-        JSONObject retweet = new JSONObject();
-        retweet.put(CurPrice, curPrice);
-        retweet.put(CurVolume, curVolume);
-        retweet.put(CurTime, datetime);
-        retweet.put(MarketQuotation, marketQuotation);
-        retweet.put(MarketDepth, marketDepth);
-        retweet.put(Timestamp, timestamp);
+        JSONObject toRetweet = new JSONObject();
+        toRetweet.put(CurPrice, curPrice);
+        toRetweet.put(CurVolume, curVolume);
+        toRetweet.put(CurTime, datetime);
+        toRetweet.put(MarketQuotation, marketQuotation);
+        toRetweet.put(MarketDepth, marketDepth);
+        toRetweet.put(Timestamp, timestamp);
 
-        this.brokerSocketContainer.broadcast(retweet.toJSONString(), marketDepthId);
+        this.brokerSocketContainer.getToRetweet().put(marketDepthId, toRetweet);
     }
 
     @Override

@@ -51,6 +51,13 @@ public class BrokerServiceImpl implements BrokerService {
         }
     }
 
+    @Scheduled(fixedRate=1500)
+    private void broadcast(){
+        brokerSocketContainers.entrySet().stream().forEach(e -> {
+            pool.execute(() ->e.getValue().broadcastAll());
+        });
+    }
+
     @Bean
     public ExecutorService pool(){
         return Executors.newCachedThreadPool();
