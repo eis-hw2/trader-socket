@@ -102,7 +102,6 @@ public class BrokerSocketClient extends WebSocketClient {
         float curPrice = marketQuotation.getChangePrice();
         Calendar curTime = Calendar.getInstance();
         int curVolume = curData.getCurVolume();
-        int curTotalVolume = marketQuotation.getTotalVolume();
 
         this.brokerSocketContainer.getLastDataPair().put(marketDepthId, curData);
         logger.info("[BrokerSocketClient.onMessage] lastDataPair update: ("+marketDepthId+", "+JSON.toJSONString(curData)+")");
@@ -120,7 +119,8 @@ public class BrokerSocketClient extends WebSocketClient {
         futureRecord.setPrice(curPrice);
         futureRecord.setVolume(curVolume);
         futureRecord.setTimestamp(timestamp);
-        this.getBrokerSocketContainer().getFutureRecordDao().save(futureRecord);
+        logger.info("[BrokerSocketClient.onMessage] Save FutureRecord: " + JSON.toJSONString(futureRecord));
+        this.brokerSocketContainer.saveFutureRecord(futureRecord);
 
         /**
          * 转发信息

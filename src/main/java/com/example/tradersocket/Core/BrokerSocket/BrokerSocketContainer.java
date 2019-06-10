@@ -2,6 +2,7 @@ package com.example.tradersocket.Core.BrokerSocket;
 
 import com.example.tradersocket.Dao.FutureRecordDao;
 import com.example.tradersocket.Domain.Entity.Broker;
+import com.example.tradersocket.Domain.Entity.FutureRecord;
 import com.example.tradersocket.Domain.Entity.MarketDepth;
 import com.example.tradersocket.Service.WebSocketService;
 import org.slf4j.Logger;
@@ -105,6 +106,10 @@ public class BrokerSocketContainer {
                 msg,
                 this.broker.getId(),
                 marketDepthId);
+    }
+
+    public FutureRecord saveFutureRecord(FutureRecord fr){
+        return futureRecordDao.save(fr);
     }
 
     public void resetStatus(){
