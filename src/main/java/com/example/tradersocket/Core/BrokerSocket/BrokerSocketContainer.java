@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -123,7 +124,12 @@ public class BrokerSocketContainer {
     }
 
     public void broadcastAll(){
+        String curTime =  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(curTime.getTime());
+
         toRetweet.entrySet().stream().forEach(e -> {
+
+            JSONObject toReTweet = e.getValue();
+            toReTweet.put("curTime", curTime);
             String msg = e.getValue().toJSONString();
             String marketDepthId = e.getKey();
 

@@ -23,10 +23,11 @@ public class BrokerSocketClient extends WebSocketClient {
 
     private final static String MarketQuotation = "marketQuotation";
     private final static String MarketDepth = "marketDepth";
-    private final static String Timestamp = "timestamp";
     private final static String CurPrice = "curPrice";
     private final static String CurVolume = "curVolume";
     private final static String CurTime = "curTime";
+    private final static String ReceivedTime = "receivedTime";
+    private final static String ReceivedTimeStamp = "receivedTimestamp";
 
     private boolean closedByContainer = false;
 
@@ -61,7 +62,7 @@ public class BrokerSocketClient extends WebSocketClient {
         JSONObject body = JSON.parseObject(msg);
         String mqStr = body.getString(MarketQuotation);
         String mdStr = body.getString(MarketDepth);
-        long timestamp = body.getLongValue(Timestamp);
+        long receivedTimeStamp = body.getLongValue(ReceivedTimeStamp);
 
         MarketDepth marketDepth = JSON.parseObject(mdStr, MarketDepth.class);
         MarketQuotation marketQuotation = JSON.parseObject(mqStr, MarketQuotation.class);
@@ -79,7 +80,7 @@ public class BrokerSocketClient extends WebSocketClient {
 
         curData.setMarketDepth(marketDepth);
         curData.setMarketQuotation(marketQuotation);
-        curData.setTimestamp(timestamp);
+        curData.setTimestamp(receivedTimeStamp);
 
         int totalVolume = marketQuotation.getTotalVolume();
         if (lastData == null){
@@ -118,7 +119,7 @@ public class BrokerSocketClient extends WebSocketClient {
         futureRecord.setMarketDepthId(marketDepthId);
         futureRecord.setPrice(curPrice);
         futureRecord.setVolume(curVolume);
-        futureRecord.setTimestamp(timestamp);
+        futureRecord.setTimestamp(receivedTimeStamp);
         logger.info("[BrokerSocketClient.onMessage] Save FutureRecord: " + JSON.toJSONString(futureRecord));
 
 
@@ -130,10 +131,10 @@ public class BrokerSocketClient extends WebSocketClient {
         JSONObject toRetweet = new JSONObject();
         toRetweet.put(CurPrice, curPrice);
         toRetweet.put(CurVolume, curVolume);
-        toRetweet.put(CurTime, datetime);
+        toRetweet.put(ReceivedTime, datetime);
         toRetweet.put(MarketQuotation, marketQuotation);
         toRetweet.put(MarketDepth, marketDepth);
-        toRetweet.put(Timestamp, timestamp);
+        toRetweet.put(ReceivedTimeStamp, receivedTimeStamp);
 
         logger.info("[BrokerSocketClient.onMessage] Update ToReTweet:" + toRetweet.toJSONString());
         this.brokerSocketContainer.getToRetweet().put(marketDepthId, toRetweet);
