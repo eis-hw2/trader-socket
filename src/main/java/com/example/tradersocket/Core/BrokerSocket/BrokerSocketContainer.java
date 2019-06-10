@@ -127,7 +127,7 @@ public class BrokerSocketContainer {
             String msg = e.getValue().toJSONString();
             String marketDepthId = e.getKey();
 
-            logger.info("[BrokerSocketContainer.broadcastAll] "+broker.getId()+"."+marketDepthId+":"+msg);
+            //logger.info("[BrokerSocketContainer.broadcastAll] "+broker.getId()+"."+marketDepthId+":"+msg);
             broadcast(msg, marketDepthId);
         });
     }
