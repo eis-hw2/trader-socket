@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -124,7 +125,7 @@ public class BrokerSocketContainer {
     }
 
     public void broadcastAll(){
-        String curTime =  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(curTime.getTime());
+        String curTime =  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Calendar.getInstance().getTime());
 
         toRetweet.entrySet().stream().forEach(e -> {
 
