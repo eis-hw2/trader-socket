@@ -201,6 +201,7 @@ public class WebSocketServiceImpl implements WebSocketService {
                     startTime,
                     intervalSecond
             );
+        logger.info("[WebSocketService.onMessage] Records: "+JSON.toJSONString(records));
         DataPair dataPair = brokerService.getDataPairByBrokerIdAndMarketDepthId(brokerId, marketDepthId);
         response.put("history", records);
         if (dataPair == null){
