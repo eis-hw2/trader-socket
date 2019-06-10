@@ -7,6 +7,7 @@ import com.example.tradersocket.Service.BrokerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -17,7 +18,7 @@ public class StatusController {
 
     @GetMapping("/MarketQuotation")
     public ResponseWrapper getMarketQuotationByBrokerIdAndMarketDepthId(
-            Integer brokerId, String marketDepthId){
+            @RequestParam Integer brokerId, @RequestParam String marketDepthId){
         MarketQuotation mq = brokerService
                 .getDataPairByBrokerIdAndMarketDepthId(brokerId, marketDepthId)
                 .getMarketQuotation();
