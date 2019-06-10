@@ -1,5 +1,7 @@
 package com.example.tradersocket.Controller;
 
+import com.example.tradersocket.Core.BrokerSocket.DataPair;
+import com.example.tradersocket.Domain.Entity.MarketDepth;
 import com.example.tradersocket.Domain.Entity.MarketQuotation;
 import com.example.tradersocket.Domain.Factory.ResponseWrapperFactory;
 import com.example.tradersocket.Domain.Wrapper.ResponseWrapper;
@@ -23,5 +25,22 @@ public class StatusController {
                 .getDataPairByBrokerIdAndMarketDepthId(brokerId, marketDepthId)
                 .getMarketQuotation();
         return ResponseWrapperFactory.create(ResponseWrapper.SUCCESS, mq);
+    }
+
+    @GetMapping("/OrderBook")
+    public ResponseWrapper getOrderBookByBrokerIdAndMarketDepthId(
+        @RequestParam Integer brokerId, @RequestParam String marketDepthId){
+        MarketDepth md = brokerService
+                .getDataPairByBrokerIdAndMarketDepthId(brokerId, marketDepthId)
+                .getMarketDepth();
+        return ResponseWrapperFactory.create(ResponseWrapper.SUCCESS, md);
+    }
+
+    @GetMapping("")
+    public ResponseWrapper getStatus(
+            @RequestParam Integer brokerId, @RequestParam String marketDepthId){
+        DataPair dp = brokerService
+                .getDataPairByBrokerIdAndMarketDepthId(brokerId, marketDepthId);
+        return ResponseWrapperFactory.create(ResponseWrapper.SUCCESS, dp);
     }
 }
